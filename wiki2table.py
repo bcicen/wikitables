@@ -1,63 +1,80 @@
 import requests
 import logging
 import json
-from bs4 import BeautifulSoup
-from bs4 import element
+import mwparserfromhell
+from mwparserfromhell.nodes.template import Template
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('wikitables')
 
-def import_table(url):
-    r = requests.get(url)
-    soup = BeautifulSoup(r.text, 'html.parser')
-    title = soup.findAll('h1', {'class': ['firstHeading']})[0].text
-    tables = soup.findAll("table", {'class': ['wikitable']})
-    return [ WikiTable(t) for t in tables ]
+article_title="List of European cities by population within city limits"
+
+class WikiClient(requests.Session):
+    """ """
+    base_url = 'https://en.wikipedia.org/w/api.php'
+
+    def __init__(self):
+        super(WikiClient, self).__init__()
+
+    def fetch_page(self, title, method='GET'):
+        params = { 'prop': 'revisions',
+                   'format': 'json',
+                   'action': 'query',
+                   'explaintext': '',
+                   'titles': title,
+                   'rvprop': 'content' }
+        r = self.request(method, self.base_url, params=params)
+        r.raise_for_status()
+
+        return r.json()
+    
+def import_tables(article):
+    client = WikiClient()
+    page = client.fetch_page(article)
+    for k,v in page['query']['pages'].items():
+        full_body = v['revisions'][0]['*']
+
+    ## parse nodes for tables
+    raw_tables = mwparserfromhell.parse(full_body).filter_tags(
+            matches=lambda node: node.tag == "table")
+
+    print(raw_tables)
+    return [ read_table(t) for t in raw_tables ]
+
+def read_table(wc):
+    data = []
+    rows = wc.contents.nodes
+    head = read_head(rows.pop(0))
+    print(head)
+    for row in rows:
+        cols = [ read_column(c) for c in row.contents.nodes ]
+        if cols:
+            data.append( {x:y for x,y in zip(head, cols) })
+    return data
+
+def read_head(node):
+    head = []
+    for th in node.contents.filter_tags(matches=lambda x: x.tag == "th"):
+        head.append(th.contents.strip_code().strip(' '))
+    return head
+
+def read_column(node):
+    vals = [ read_field(f) for f in node.contents.nodes ]
+    return ' '.join([ v for v in vals if v ])
+
+def read_field(node):
+    print(type(node))
+    if isinstance(node, Template):
+        #TODO: handle common wiki templates for type guessing
+        return ' '.join([ str(p) for p in node.params ])
+    return str(node).strip(' \n')
 
 class WikiTable(object):
-    omit_classes = set('sortkey', 'reference')
-
-    def __init__(self, raw_table, strip_refs=True):
-        self._head = []
-        self._data = []
-        self._raw_table = raw_table
-        self._read()
+    def __init__(self, wikicode):
+        self._data = {}
 
     def as_json(self):
         return json.dumps(self._data)
 
-    def _read(self):
-        rows = self._raw_table.findAll('tr')
-        for th in rows.pop(0).findAll('th'):
-            self._head.append(self._sanitize(th.text))
-        for row in rows:
-            self._data.append(self._read_row(row))
-                
-    def _read_row(self, row):
-        nrow = {}
-        for idx, td in enumerate(row.findAll('td')):
-            nrow[self._head[idx]] = self._strip_ref(td)
-        return nrow
-
-    def _parse(self, elem):
-        """
-        Return a sanitized string of an elements contents,
-        minus any omitted classes
-        """
-        if isinstance(i, element.NavigableString):
-            return i
-        if i.has_attr('class'):
-            if not self.omit_classes.intersection(set(i['class']):
-                return i.text
-            return None
-        return i.text
-
-    def _strip_ref(self, elem):
-        parsed = [ self._parse(i) for i in elem.contents ]
-        return ' '.join([ i for i in parsed if i ])
-
-    @staticmethod
-    def _sanitize(s):
-        return s.replace('\n', ' ')
-
-
+    def _read_head(self):
+        pass
