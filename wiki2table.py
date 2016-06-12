@@ -3,6 +3,7 @@ import logging
 import json
 import mwparserfromhell
 from mwparserfromhell.nodes.template import Template
+from mwparserfromhell.nodes.wikilink import Wikilink
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('wikitables')
@@ -38,14 +39,12 @@ def import_tables(article):
     raw_tables = mwparserfromhell.parse(full_body).filter_tags(
             matches=lambda node: node.tag == "table")
 
-    print(raw_tables)
     return [ read_table(t) for t in raw_tables ]
 
 def read_table(wc):
     data = []
     rows = wc.contents.nodes
     head = read_head(rows.pop(0))
-    print(head)
     for row in rows:
         cols = [ read_column(c) for c in row.contents.nodes ]
         if cols:
@@ -63,10 +62,13 @@ def read_column(node):
     return ' '.join([ v for v in vals if v ])
 
 def read_field(node):
-    print(type(node))
     if isinstance(node, Template):
         #TODO: handle common wiki templates for type guessing
+        if node.name == 'refn':
+            return None
         return ' '.join([ str(p) for p in node.params ])
+    if isinstance(node, Wikilink):
+        return str(node.title)
     return str(node).strip(' \n')
 
 class WikiTable(object):
