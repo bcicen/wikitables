@@ -2,6 +2,7 @@ import requests
 import logging
 import json
 import mwparserfromhell
+from mwparserfromhell.nodes.tag import Tag
 from mwparserfromhell.nodes.template import Template
 from mwparserfromhell.nodes.wikilink import Wikilink
 
@@ -9,6 +10,14 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('wikitables')
 
 article_title="List of European cities by population within city limits"
+
+mtables = lambda node: node.tag == "table"
+mhead = lambda node: node.tag == "th"
+mrow = lambda node: node.tag == "tr"
+mcol = lambda node: node.tag == "td"
+
+class ArticleNotFound(RuntimeError):
+    """ Article query returned no results """
 
 class WikiClient(requests.Session):
     """ """
@@ -26,50 +35,61 @@ class WikiClient(requests.Session):
                    'rvprop': 'content' }
         r = self.request(method, self.base_url, params=params)
         r.raise_for_status()
+        pages = r.json()['query']['pages']
+        if '-1' in pages:
+            raise ArticleNotFound('no matching articles returned')
 
-        return r.json()
+        return pages
     
 def import_tables(article):
     client = WikiClient()
-    page = client.fetch_page(article)
-    for k,v in page['query']['pages'].items():
-        full_body = v['revisions'][0]['*']
+    pages = client.fetch_page(article)
+    for k,v in pages.items():
+        body = v['revisions'][0]['*']
 
     ## parse nodes for tables
-    raw_tables = mwparserfromhell.parse(full_body).filter_tags(
-            matches=lambda node: node.tag == "table")
+    raw_tables = mwparserfromhell.parse(body).filter_tags(matches=mtables)
 
     return [ read_table(t) for t in raw_tables ]
 
-def read_table(wc):
+def read_table(table):
     data = []
-    rows = wc.contents.nodes
-    head = read_head(rows.pop(0))
-    for row in rows:
-        cols = [ read_column(c) for c in row.contents.nodes ]
-        if cols:
-            data.append( {x:y for x,y in zip(head, cols) })
+    head = []
+
+    # read head
+    th_nodes = table.contents.filter_tags(matches=mhead)
+    for th in th_nodes:
+        val = th.contents.strip_code().strip(' ')
+        head.append(val)
+        table.contents.remove(th)
+
+    for row in table.contents.ifilter_tags(matches=mrow):
+        cols = row.contents.filter_tags(matches=mcol)
+        vals = [ read_column(c) for c in cols ]
+        if vals:
+            data.append( {x:y for x,y in zip(head, vals) })
+
     return data
 
-def read_head(node):
-    head = []
-    for th in node.contents.filter_tags(matches=lambda x: x.tag == "th"):
-        head.append(th.contents.strip_code().strip(' '))
-    return head
-
 def read_column(node):
-    vals = [ read_field(f) for f in node.contents.nodes ]
+    print(node.contents)
+    try:
+        vals = [ read_field(f).strip(' \n') for f in node.contents.nodes ]
+    except Exception as e:
+        raise Exception(e)
     return ' '.join([ v for v in vals if v ])
 
 def read_field(node):
     if isinstance(node, Template):
         #TODO: handle common wiki templates for type guessing
         if node.name == 'refn':
-            return None
+            return ''
         return ' '.join([ str(p) for p in node.params ])
+    if isinstance(node, Tag):
+        return ''
     if isinstance(node, Wikilink):
         return str(node.title)
-    return str(node).strip(' \n')
+    return str(node)
 
 class WikiTable(object):
     def __init__(self, wikicode):
