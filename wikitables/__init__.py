@@ -1,4 +1,3 @@
-import requests
 import logging
 import json
 import mwparserfromhell
@@ -6,43 +5,18 @@ from mwparserfromhell.nodes.tag import Tag
 from mwparserfromhell.nodes.template import Template
 from mwparserfromhell.nodes.wikilink import Wikilink
 
+from wikitables import Client
+
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('wikitables')
-
-article_title="List of European cities by population within city limits"
 
 mtables = lambda node: node.tag == "table"
 mhead = lambda node: node.tag == "th"
 mrow = lambda node: node.tag == "tr"
 mcol = lambda node: node.tag == "td"
 
-class ArticleNotFound(RuntimeError):
-    """ Article query returned no results """
-
-class WikiClient(requests.Session):
-    """ """
-    base_url = 'https://en.wikipedia.org/w/api.php'
-
-    def __init__(self):
-        super(WikiClient, self).__init__()
-
-    def fetch_page(self, title, method='GET'):
-        params = { 'prop': 'revisions',
-                   'format': 'json',
-                   'action': 'query',
-                   'explaintext': '',
-                   'titles': title,
-                   'rvprop': 'content' }
-        r = self.request(method, self.base_url, params=params)
-        r.raise_for_status()
-        pages = r.json()['query']['pages']
-        if '-1' in pages:
-            raise ArticleNotFound('no matching articles returned')
-
-        return pages
-    
 def import_tables(article):
-    client = WikiClient()
+    client = Client()
     pages = client.fetch_page(article)
     for k,v in pages.items():
         body = v['revisions'][0]['*']
