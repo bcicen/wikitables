@@ -26,7 +26,7 @@ class WikiTable(object):
         return json.dumps(self.data)
 
     def __repr__(self):
-        return '<WikiTable %s>' % self.name
+        return "<WikiTable '%s'>" % self.name
 
     def _read(self, raw_table):
         th_nodes = raw_table.contents.filter_tags(matches=mhead)
@@ -55,6 +55,8 @@ class WikiTable(object):
                 return ''
             return ' '.join([ str(p) for p in node.params ])
         if isinstance(node, Tag):
+            if node.contents:
+                return node.contents.strip_code()
             return ''
         if isinstance(node, Wikilink):
             return str(node.title)
