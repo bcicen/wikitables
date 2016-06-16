@@ -5,7 +5,7 @@ from mwparserfromhell.nodes.tag import Tag
 from mwparserfromhell.nodes.template import Template
 from mwparserfromhell.nodes.wikilink import Wikilink
 
-from wikitables import Client
+from wikitables.client import Client
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('wikitables')
@@ -17,9 +17,8 @@ mcol = lambda node: node.tag == "td"
 
 def import_tables(article):
     client = Client()
-    pages = client.fetch_page(article)
-    for k,v in pages.items():
-        body = v['revisions'][0]['*']
+    page = client.fetch_page(article)
+    body = page['revisions'][0]['*']
 
     ## parse nodes for tables
     raw_tables = mwparserfromhell.parse(body).filter_tags(matches=mtables)
@@ -46,7 +45,6 @@ def read_table(table):
     return data
 
 def read_column(node):
-    print(node.contents)
     try:
         vals = [ read_field(f).strip(' \n') for f in node.contents.nodes ]
     except Exception as e:
@@ -66,8 +64,10 @@ def read_field(node):
     return str(node)
 
 class WikiTable(object):
-    def __init__(self, wikicode):
-        self._data = {}
+    def __init__(self, name):
+        self.name = name
+        self._head = []
+        self._rows = []
 
     def as_json(self):
         return json.dumps(self._data)
