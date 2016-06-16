@@ -1,19 +1,13 @@
 import logging
-import json
 import mwparserfromhell
-from mwparserfromhell.nodes.tag import Tag
-from mwparserfromhell.nodes.template import Template
-from mwparserfromhell.nodes.wikilink import Wikilink
 
 from wikitables.client import Client
+from wikitables.models import WikiTable
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('wikitables')
 
 mtables = lambda node: node.tag == "table"
-mhead = lambda node: node.tag == "th"
-mrow = lambda node: node.tag == "tr"
-mcol = lambda node: node.tag == "td"
 
 def import_tables(article):
     client = Client()
@@ -23,54 +17,9 @@ def import_tables(article):
     ## parse nodes for tables
     raw_tables = mwparserfromhell.parse(body).filter_tags(matches=mtables)
 
-    return [ read_table(t) for t in raw_tables ]
+    def _table_gen(raw_tables):
+        for idx, table in enumerate(raw_tables):
+            name = '%s[%s]' % (page['title'],idx)
+            yield WikiTable(name, table)
 
-def read_table(table):
-    data = []
-    head = []
-
-    # read head
-    th_nodes = table.contents.filter_tags(matches=mhead)
-    for th in th_nodes:
-        val = th.contents.strip_code().strip(' ')
-        head.append(val)
-        table.contents.remove(th)
-
-    for row in table.contents.ifilter_tags(matches=mrow):
-        cols = row.contents.filter_tags(matches=mcol)
-        vals = [ read_column(c) for c in cols ]
-        if vals:
-            data.append( {x:y for x,y in zip(head, vals) })
-
-    return data
-
-def read_column(node):
-    try:
-        vals = [ read_field(f).strip(' \n') for f in node.contents.nodes ]
-    except Exception as e:
-        raise Exception(e)
-    return ' '.join([ v for v in vals if v ])
-
-def read_field(node):
-    if isinstance(node, Template):
-        #TODO: handle common wiki templates for type guessing
-        if node.name == 'refn':
-            return ''
-        return ' '.join([ str(p) for p in node.params ])
-    if isinstance(node, Tag):
-        return ''
-    if isinstance(node, Wikilink):
-        return str(node.title)
-    return str(node)
-
-class WikiTable(object):
-    def __init__(self, name):
-        self.name = name
-        self._head = []
-        self._rows = []
-
-    def as_json(self):
-        return json.dumps(self._data)
-
-    def _read_head(self):
-        pass
+    return list(_table_gen(raw_tables))
