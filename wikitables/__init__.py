@@ -1,8 +1,8 @@
 import logging
-import mwparserfromhell
+import mwparserfromhell as mwp
 
 from wikitables.client import Client
-from wikitables.models import WikiTable
+from wikitables.models import WikiTable, ftag
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('wikitables')
@@ -15,7 +15,7 @@ def import_tables(article):
     body = page['revisions'][0]['*']
 
     ## parse nodes for tables
-    raw_tables = mwparserfromhell.parse(body).filter_tags(matches=mtables)
+    raw_tables = mwp.parse(body).filter_tags(matches=ftag('table'))
 
     def _table_gen(raw_tables):
         for idx, table in enumerate(raw_tables):

@@ -3,14 +3,18 @@ from mwparserfromhell.nodes.tag import Tag
 from mwparserfromhell.nodes.template import Template
 from mwparserfromhell.nodes.wikilink import Wikilink
 
-mhead = lambda node: node.tag == "th"
-mrow = lambda node: node.tag == "tr"
-mcol = lambda node: node.tag == "td"
+def ftag(t):
+    return lambda node: node.tag == t
 
 class WikiTable(object):
+    """
+    params:
+     - name(str): Wikilink
+    """
     head = []
     rows = []
-    """ """
+    name = None
+
     def __init__(self, name, raw_table):
         self.name = name
         self._read(raw_table)
@@ -29,14 +33,14 @@ class WikiTable(object):
         return "<WikiTable '%s'>" % self.name
 
     def _read(self, raw_table):
-        th_nodes = raw_table.contents.filter_tags(matches=mhead)
+        th_nodes = raw_table.contents.filter_tags(matches=ftag('th'))
         for th in th_nodes:
             val = th.contents.strip_code().strip(' ')
             self.head.append(val)
             raw_table.contents.remove(th)
     
-        for row in raw_table.contents.ifilter_tags(matches=mrow):
-            cols = row.contents.filter_tags(matches=mcol)
+        for row in raw_table.contents.ifilter_tags(matches=ftag('tr')):
+            cols = row.contents.filter_tags(matches=ftag('td'))
             row = [ self._read_column(c) for c in cols ]
             if row:
                 self.rows.append(row)

@@ -7,13 +7,14 @@ class ArticleNotFound(RuntimeError):
     """ Article query returned no results """
 
 class Client(requests.Session):
-    """ """
+    """ Mediawiki API client """
     base_url = 'https://en.wikipedia.org/w/api.php'
 
     def __init__(self):
         super(Client, self).__init__()
 
     def fetch_page(self, title, method='GET'):
+        """ Query for page by title """
         params = { 'prop': 'revisions',
                    'format': 'json',
                    'action': 'query',
