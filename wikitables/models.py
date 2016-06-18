@@ -58,8 +58,8 @@ class WikiTable(object):
     
     def _read_field(self, node):
         if isinstance(node, Template):
-            print(node)
-            print(node.name)
+            if node.name == "dts":
+                return self._read_dts(node)
             if node.name == 'refn':
                 return ''
             return ' '.join([ str(p) for p in node.params ])
@@ -71,3 +71,11 @@ class WikiTable(object):
             return str(node.title)
         return str(node)
 
+    def _read_dts(self, node):
+        ret = []
+        for i in range(1,6):
+            istr = str(i)
+            if not node.has(istr, ignore_empty=True):
+                break
+            ret.append(str(node.get(istr)))
+        return ' '.join(ret)
