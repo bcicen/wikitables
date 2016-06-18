@@ -9,14 +9,17 @@ def ftag(t):
 class WikiTable(object):
     """
     params:
-     - name(str): Wikilink
+     - name(str): Name given to the table
+     - raw_table(mwparserfromhell.wikicode.Wikicode): Table source Wikicode
     """
-    head = []
-    rows = []
     name = None
 
     def __init__(self, name, raw_table):
         self.name = name
+        self.head = []
+        self.rows = []
+        self._raw_head = []
+        self._raw_rows = []
         self._read(raw_table)
 
     @property
@@ -35,15 +38,16 @@ class WikiTable(object):
     def _read(self, raw_table):
         th_nodes = raw_table.contents.filter_tags(matches=ftag('th'))
         for th in th_nodes:
-            val = th.contents.strip_code().strip(' ')
-            self.head.append(val)
+            self._raw_head.append(th)
+            self.head.append(th.contents.strip_code().strip(' '))
             raw_table.contents.remove(th)
     
         for row in raw_table.contents.ifilter_tags(matches=ftag('tr')):
+            self._raw_rows.append(row)
             cols = row.contents.filter_tags(matches=ftag('td'))
-            row = [ self._read_column(c) for c in cols ]
-            if row:
-                self.rows.append(row)
+            parsed_row = [ self._read_column(c) for c in cols ]
+            if parsed_row: #omit empty rows
+                self.rows.append(parsed_row)
 
     def _read_column(self, node):
         def _read_column_fields(fields):
@@ -54,7 +58,8 @@ class WikiTable(object):
     
     def _read_field(self, node):
         if isinstance(node, Template):
-            #TODO: handle common wiki templates for type guessing
+            print(node)
+            print(node.name)
             if node.name == 'refn':
                 return ''
             return ' '.join([ str(p) for p in node.params ])
@@ -65,3 +70,4 @@ class WikiTable(object):
         if isinstance(node, Wikilink):
             return str(node.title)
         return str(node)
+

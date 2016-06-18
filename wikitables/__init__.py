@@ -17,9 +17,9 @@ def import_tables(article):
     ## parse nodes for tables
     raw_tables = mwp.parse(body).filter_tags(matches=ftag('table'))
 
-    def _table_gen(raw_tables):
+    def _table_gen():
         for idx, table in enumerate(raw_tables):
             name = '%s[%s]' % (page['title'],idx)
             yield WikiTable(name, table)
 
-    return list(_table_gen(raw_tables))
+    return list(_table_gen())
