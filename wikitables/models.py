@@ -3,8 +3,7 @@ from mwparserfromhell.nodes.tag import Tag
 from mwparserfromhell.nodes.template import Template
 from mwparserfromhell.nodes.wikilink import Wikilink
 
-def ftag(t):
-    return lambda node: node.tag == t
+from wikitables.util import TableJSONEncoder, ftag
 
 class Field(object):
     def __init__(self, node):
@@ -15,6 +14,9 @@ class Field(object):
         return self.value
 
     def __repr__(self):
+        return self.value
+
+    def __json__(self):
         return self.value
 
     def _read(self, node):
@@ -52,7 +54,7 @@ class Field(object):
 
 class Row(list):
     def __init__(self, *args, **kwargs):
-        self.raw = args[0]
+        self.raw = args[1]
         super(Row, self).__init__(self._read(self.raw))
 
     @property
@@ -90,7 +92,7 @@ class WikiTable(object):
         return list(_data_gen())
 
     def json(self):
-        return json.dumps(self.data, cls=WtJsonEncoder)
+        return json.dumps(self.data, cls=TableJSONEncoder)
 
     def __repr__(self):
         return "<WikiTable '%s'>" % self.name

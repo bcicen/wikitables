@@ -1,8 +1,9 @@
 import logging
 import mwparserfromhell as mwp
 
+from wikitables.util import ftag
 from wikitables.client import Client
-from wikitables.models import WikiTable, ftag
+from wikitables.models import WikiTable
 
 logging.basicConfig(level=logging.WARN)
 log = logging.getLogger('wikitables')
