@@ -71,9 +71,9 @@ class WikiTable(object):
 
     def _read_template(self, node):
         ret = []
-        for i in range(1,20):
-            istr = str(i)
-            if not node.has(istr, ignore_empty=True):
+        param_idx = [ str(i) for i in range(1,20) ]
+        for i in param_idx:
+            if not node.has(i):
                 break
-            ret.append(str(node.get(istr)))
+            ret.append(str(node.get(i)))
         return ' '.join(ret)
