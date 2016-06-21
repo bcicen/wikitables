@@ -6,6 +6,12 @@ from mwparserfromhell.nodes.wikilink import Wikilink
 from wikitables.util import TableJSONEncoder, ftag
 
 class Field(object):
+    """
+    Field within a table row 
+    attributes:
+     - raw(mwparserfromhell.nodes.Node) - Unparsed field Wikicode
+     - value(str) - Parsed field value as string
+    """
     def __init__(self, node):
         self.raw = node
         self.value = self._read(self.raw)
@@ -52,31 +58,34 @@ class Field(object):
         vals = [ str(p.value) for p in node.params if _is_int(p.name) ]
         return ' '.join(vals)
 
-class Row(list):
+class Row(dict):
+    """
+    Single WikiTable row, mapping a field name(str) to wikitables.Field obj
+    """
     def __init__(self, *args, **kwargs):
+        head = args[0]
         self.raw = args[1]
-        super(Row, self).__init__(self._read(self.raw))
+        super(Row, self).__init__(self._read(head, self.raw))
 
     @property
     def is_null(self):
-        for f in self.__iter__():
+        for k,f in self.items():
             if f.value != '':
                 return False
         return True
 
     @staticmethod
-    def _read(node):
+    def _read(head, node):
         cols = node.contents.ifilter_tags(matches=ftag('td'))
-        return [ Field(c) for c in cols ]
+        return zip(head, [ Field(c) for c in cols ])
 
 class WikiTable(object):
     """ 
     Parsed Wikipedia table
     attributes:
      - name(str): Table name in the format <article_name>[<table_index>] 
-     - data(list): List of dicts(rows) containing parsed column names and values
-     - head(list): List of parsed column names
-     - rows(list): List of parsed rows
+     - head(list): List of parsed column names as strings
+     - rows(list): List of <wikitables.Row> objects
     """
     def __init__(self, name, raw_table):
         self.name = name
@@ -84,15 +93,8 @@ class WikiTable(object):
         self.rows = []
         self._read(raw_table)
 
-    @property
-    def data(self):
-        def _data_gen():
-            for row in self.rows:
-                yield { x:y for x,y in zip(self.head, row) }
-        return list(_data_gen())
-
     def json(self):
-        return json.dumps(self.data, cls=TableJSONEncoder)
+        return json.dumps(self.rows, cls=TableJSONEncoder)
 
     def __repr__(self):
         return "<WikiTable '%s'>" % self.name
@@ -104,6 +106,6 @@ class WikiTable(object):
             raw_table.contents.remove(th)
     
         for tr in raw_table.contents.ifilter_tags(matches=ftag('tr')):
-            row = Row(tr)
+            row = Row(self.head, tr)
             if not row.is_null:
                 self.rows.append(row)
