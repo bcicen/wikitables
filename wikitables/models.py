@@ -1,64 +1,44 @@
 import json
+import logging
 from mwparserfromhell.nodes.tag import Tag
 from mwparserfromhell.nodes.template import Template
 from mwparserfromhell.nodes.wikilink import Wikilink
 
-def ftag(t):
-    return lambda node: node.tag == t
+from wikitables.util import TableJSONEncoder, ftag
 
-class WikiTable(object):
+log = logging.getLogger('wikitables')
+
+class Field(object):
     """
-    params:
-     - name(str): Name given to the table
-     - raw_table(mwparserfromhell.wikicode.Wikicode): Table source Wikicode
+    Field within a table row 
+    attributes:
+     - raw(mwparserfromhell.nodes.Node) - Unparsed field Wikicode
+     - value(str) - Parsed field value as string
     """
-    name = None
+    def __init__(self, node):
+        self.raw = node
+        self.value = self._read(self.raw)
 
-    def __init__(self, name, raw_table):
-        self.name = name
-        self.head = []
-        self.rows = []
-        self._raw_head = []
-        self._raw_rows = []
-        self._read(raw_table)
-
-    @property
-    def data(self):
-        def _data_gen():
-            for row in self.rows:
-                yield { x:y for x,y in zip(self.head, row) }
-        return list(_data_gen())
-
-    def json(self):
-        return json.dumps(self.data)
+    def __str__(self):
+        return self.value
 
     def __repr__(self):
-        return "<WikiTable '%s'>" % self.name
+        return self.value
 
-    def _read(self, raw_table):
-        th_nodes = raw_table.contents.filter_tags(matches=ftag('th'))
-        for th in th_nodes:
-            self._raw_head.append(th)
-            self.head.append(th.contents.strip_code().strip(' '))
-            raw_table.contents.remove(th)
-    
-        for row in raw_table.contents.ifilter_tags(matches=ftag('tr')):
-            self._raw_rows.append(row)
-            cols = row.contents.filter_tags(matches=ftag('td'))
-            parsed_row = [ self._read_column(c) for c in cols ]
-            if parsed_row: #omit empty rows
-                self.rows.append(parsed_row)
+    def __json__(self):
+        return self.value
 
-    def _read_column(self, node):
-        def _read_column_fields(fields):
-            for f in fields:
-                val = self._read_field(f).strip(' \n')
+    def _read(self, node):
+        def _read_parts():
+            for n in node.contents.nodes:
+                val = self._read_part(n).strip(' \n')
                 if val: yield val
-        return ' '.join(list(_read_column_fields(node.contents.nodes)))
+        return ' '.join(list(_read_parts()))
     
-    def _read_field(self, node):
+    def _read_part(self, node):
         if isinstance(node, Template):
             if node.name == 'refn':
+                log.debug('omitting refn subtext from field')
                 return ''
             return self._read_template(node)
         if isinstance(node, Tag):
@@ -69,11 +49,71 @@ class WikiTable(object):
             return str(node.title)
         return str(node)
 
-    def _read_template(self, node):
-        ret = []
-        param_idx = [ str(i) for i in range(1,20) ]
-        for i in param_idx:
-            if not node.has(i):
-                break
-            ret.append(str(node.get(i)))
-        return ' '.join(ret)
+    @staticmethod
+    def _read_template(node):
+        """ Concatenate all template values having an integer param name """
+        def _is_int(o):
+            try:
+                int(str(o))
+                return True
+            except ValueError:
+                return False
+
+        vals = [ str(p.value) for p in node.params if _is_int(p.name) ]
+        return ' '.join(vals)
+
+class Row(dict):
+    """
+    Single WikiTable row, mapping a field name(str) to wikitables.Field obj
+    """
+    def __init__(self, *args, **kwargs):
+        head = args[0]
+        self.raw = args[1]
+        super(Row, self).__init__(self._read(head, self.raw))
+
+    @property
+    def is_null(self):
+        for k,f in self.items():
+            if f.value != '':
+                return False
+        return True
+
+    @staticmethod
+    def _read(head, node):
+        cols = node.contents.ifilter_tags(matches=ftag('td'))
+        return zip(head, [ Field(c) for c in cols ])
+
+class WikiTable(object):
+    """ 
+    Parsed Wikipedia table
+    attributes:
+     - name(str): Table name in the format <article_name>[<table_index>] 
+     - head(list): List of parsed column names as strings
+     - rows(list): List of <wikitables.Row> objects
+    """
+    def __init__(self, name, raw_table):
+        self.name = name
+        self.head = []
+        self.rows = []
+        self._read(raw_table)
+
+    def json(self):
+        return json.dumps(self.rows, cls=TableJSONEncoder)
+
+    def __repr__(self):
+        return "<WikiTable '%s'>" % self.name
+
+    def _read(self, raw_table):
+        th_nodes = raw_table.contents.filter_tags(matches=ftag('th'))
+        for th in th_nodes:
+            self.head.append(th.contents.strip_code().strip(' '))
+            raw_table.contents.remove(th)
+        log.debug('parsed %d columns from table %s' % \
+                (len(th_nodes), self.name))
+    
+        for tr in raw_table.contents.ifilter_tags(matches=ftag('tr')):
+            row = Row(self.head, tr)
+            if not row.is_null:
+                self.rows.append(row)
+        log.debug('parsed %d rows from table %s' % \
+                (len(self.rows), self.name))
