@@ -1,0 +1,8 @@
+site_name: WikiTables Documenation
+site_description: Import tables from any Wikipedia article as a dataset in Python
+site_url: https://wikitables.readthedocs.io
+repo_url: https://github.com/bcicen/wikitables
+theme: readthedocs
+pages:
+- Home: index.md
+- WikiTable: wikitable.md
