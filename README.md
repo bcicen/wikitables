@@ -1,6 +1,6 @@
 # wikitables
 
-[![PyPI version](https://badge.fury.io/py/wikitables.svg)](https://badge.fury.io/py/wikitables)
+[![Documentation Status](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](http://wikitables.readthedocs.org/en/latest/client/) [![PyPI version](https://badge.fury.io/py/wikitables.svg)](https://badge.fury.io/py/wikitables)
 
 Import tables from any Wikipedia article as a dataset in Python
 
