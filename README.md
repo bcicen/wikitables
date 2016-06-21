@@ -1,5 +1,8 @@
 # wikitables
-Import any Wikipedia table as a usable dataset in Python
+
+[![PyPI version](https://badge.fury.io/py/wikitables.svg)](https://badge.fury.io/py/wikitables)
+
+Import tables from any Wikipedia article as a dataset in Python
 
 ## Installing
 
