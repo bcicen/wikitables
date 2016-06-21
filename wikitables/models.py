@@ -1,9 +1,12 @@
 import json
+import logging
 from mwparserfromhell.nodes.tag import Tag
 from mwparserfromhell.nodes.template import Template
 from mwparserfromhell.nodes.wikilink import Wikilink
 
 from wikitables.util import TableJSONEncoder, ftag
+
+log = logging.getLogger('wikitables')
 
 class Field(object):
     """
@@ -35,6 +38,7 @@ class Field(object):
     def _read_part(self, node):
         if isinstance(node, Template):
             if node.name == 'refn':
+                log.debug('omitting refn subtext from field')
                 return ''
             return self._read_template(node)
         if isinstance(node, Tag):
@@ -104,8 +108,12 @@ class WikiTable(object):
         for th in th_nodes:
             self.head.append(th.contents.strip_code().strip(' '))
             raw_table.contents.remove(th)
+        log.debug('parsed %d columns from table %s' % \
+                (len(th_nodes), self.name))
     
         for tr in raw_table.contents.ifilter_tags(matches=ftag('tr')):
             row = Row(self.head, tr)
             if not row.is_null:
                 self.rows.append(row)
+        log.debug('parsed %d rows from table %s' % \
+                (len(self.rows), self.name))
