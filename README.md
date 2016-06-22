@@ -14,7 +14,7 @@ pip install wikitables
 
 ```python
 from wikitables import import_tables
-tables = import_tables('List of cities in Italy')
+tables = import_tables('List of cities in Italy') #returns a list of WikiTable objects
 tables[0].json()
 ```
 output:
@@ -35,9 +35,4 @@ output:
     ...
 ```
 
-## Roadmap
-
-Planned improvements include:
-
-* Type guessing for field values
-* Improved unit tests
+Full documentation available [here](http://wikitables.readthedocs.org/en/latest/client/)
