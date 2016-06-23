@@ -12,11 +12,34 @@ pip install wikitables
 
 ## Usage
 
+Importing all tables from a given article:
 ```python
 from wikitables import import_tables
 tables = import_tables('List of cities in Italy') #returns a list of WikiTable objects
+```
+
+Iterate over a table's rows:
+```python
+print(tables[0].name)
+for row in tables[0].rows:
+    print('%s: %s' % (row['City'], row['Area(km2)']))
+```
+
+output:
+```
+List of cities in Italy[0]
+Milan: 4,450.11
+Naples: 3,116.52
+Rome: 3,340.41
+Turin: 1,328.40
+...
+```
+
+Or return the table encoded as JSON:
+```python
 tables[0].json()
 ```
+
 output:
 ```json
 [
