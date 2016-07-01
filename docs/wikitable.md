@@ -1,4 +1,4 @@
-# WikiTable
+# wikitables.WikiTable
 
 Parsed Wikipedia table
 
@@ -8,7 +8,7 @@ Parsed Wikipedia table
 * head (list): List of parsed column names as strings
 * rows (list): List of <wikitables.Row> objects
 
-# Row
+# wikitables.Row
 
 Single WikiTable row as dictionary, mapping a field name(str) to wikitables.Field object
 
@@ -20,7 +20,7 @@ Whether a row is populated only with empty fields
 
 **Returns** (bool)
 
-# Field
+# wikitables.Field
 
 Single field within a table row
 
