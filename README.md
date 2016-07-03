@@ -22,7 +22,7 @@ Iterate over a table's rows:
 ```python
 print(tables[0].name)
 for row in tables[0].rows:
-    print('%s: %s' % (row['City'], row['Area(km2)']))
+    print('{City}: {Area(km2)}'.format(**row))
 ```
 
 output:
