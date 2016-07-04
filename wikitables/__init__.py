@@ -8,8 +8,9 @@ from wikitables.models import WikiTable
 logging.basicConfig(level=logging.WARN)
 log = logging.getLogger('wikitables')
 
-def import_tables(article):
-    client = Client()
+
+def import_tables(article, lang="en"):
+    client = Client(lang)
     page = client.fetch_page(article)
     body = page['revisions'][0]['*']
 
