@@ -18,6 +18,12 @@ from wikitables import import_tables
 tables = import_tables('List of cities in Italy') #returns a list of WikiTable objects
 ```
 
+To import an article from a different language, simply add the Wikipedia language code as an argument to `import_tables`
+```python
+tables = import_tables('İtalya\'daki_şehirler_listesi', 'tr') #returns a list of WikiTable objects
+
+```
+
 Iterate over a table's rows:
 ```python
 print(tables[0].name)
