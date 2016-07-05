@@ -67,3 +67,10 @@ output:
 ```
 
 Full documentation available [here](http://wikitables.readthedocs.org/en/latest)
+
+## Roadmap
+
+Some planned and wishlist features:
+
+* Python2 support
+* Type guesing from MediaWiki template values
