@@ -4,6 +4,8 @@
 
 Import tables from any Wikipedia article as a dataset in Python
 
+*NOTE*: Wikitables is a Python3-only library currently. Python2 support is planned.
+
 ## Installing
 
 ```bash
