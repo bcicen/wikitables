@@ -1,4 +1,5 @@
 import json
+import sys
 import logging
 from mwparserfromhell.nodes.tag import Tag
 from mwparserfromhell.nodes.template import Template
@@ -7,6 +8,7 @@ from mwparserfromhell.nodes.wikilink import Wikilink
 from wikitables.util import TableJSONEncoder, ftag
 
 log = logging.getLogger('wikitables')
+is_py2 = sys.version_info < (3, 0)
 
 class Field(object):
     """
@@ -46,8 +48,14 @@ class Field(object):
                 return node.contents.strip_code()
             return ''
         if isinstance(node, Wikilink):
-            return str(node.title)
-        return str(node)
+            if is_py2:
+                return unicode(node.title).encode('utf-8')
+            else:
+                return str(node.title)
+        if is_py2:
+            return unicode(node).encode('utf-8')
+        else:
+            return str(node)
 
     @staticmethod
     def _read_template(node):
