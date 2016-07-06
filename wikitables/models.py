@@ -109,19 +109,17 @@ class WikiTable(object):
         return json.dumps(self.rows, cls=TableJSONEncoder)
 
     def __repr__(self):
-        return "<WikiTable '%s'>" % self.name
+        return "<WikiTable '{}'>".format(self.name)
 
     def _read(self, raw_table):
         th_nodes = raw_table.contents.filter_tags(matches=ftag('th'))
         for th in th_nodes:
             self.head.append(th.contents.strip_code().strip(' '))
             raw_table.contents.remove(th)
-        log.debug('parsed %d columns from table %s' % \
-                (len(th_nodes), self.name))
+        log.debug('parsed {} columns from table {}'.format(len(th_nodes), self.name))
     
         for tr in raw_table.contents.ifilter_tags(matches=ftag('tr')):
             row = Row(self.head, tr)
             if not row.is_null:
                 self.rows.append(row)
-        log.debug('parsed %d rows from table %s' % \
-                (len(self.rows), self.name))
+        log.debug('parsed {} rows from table {}'.format(len(self.rows), self.name))
