@@ -1,14 +1,12 @@
 import json
-import sys
 import logging
 from mwparserfromhell.nodes.tag import Tag
 from mwparserfromhell.nodes.template import Template
 from mwparserfromhell.nodes.wikilink import Wikilink
 
-from wikitables.util import TableJSONEncoder, ftag
+from wikitables.util import TableJSONEncoder, ftag, ustr
 
 log = logging.getLogger('wikitables')
-is_py2 = sys.version_info < (3, 0)
 
 class Field(object):
     """
@@ -48,26 +46,20 @@ class Field(object):
                 return node.contents.strip_code()
             return ''
         if isinstance(node, Wikilink):
-            if is_py2:
-                return unicode(node.title).encode('utf-8')
-            else:
-                return str(node.title)
-        if is_py2:
-            return unicode(node).encode('utf-8')
-        else:
-            return str(node)
+            return ustr(node.title)
+        return ustr(node)
 
     @staticmethod
     def _read_template(node):
         """ Concatenate all template values having an integer param name """
         def _is_int(o):
             try:
-                int(str(o))
+                int(ustr(o))
                 return True
             except ValueError:
                 return False
 
-        vals = [ str(p.value) for p in node.params if _is_int(p.name) ]
+        vals = [ ustr(p.value) for p in node.params if _is_int(p.name) ]
         return ' '.join(vals)
 
 class Row(dict):
@@ -100,7 +92,7 @@ class WikiTable(object):
      - rows(list): List of <wikitables.Row> objects
     """
     def __init__(self, name, raw_table):
-        self.name = name
+        self.name = ustr(name)
         self.head = []
         self.rows = []
         self._read(raw_table)
