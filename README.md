@@ -4,8 +4,6 @@
 
 Import tables from any Wikipedia article as a dataset in Python
 
-*NOTE*: Wikitables is a Python3-only library currently. Python2 support is planned.
-
 ## Installing
 
 ```bash
@@ -72,5 +70,4 @@ Full documentation available [here](http://wikitables.readthedocs.org/en/latest)
 
 Some planned and wishlist features:
 
-* Python2 support
 * Type guesing from MediaWiki template values
