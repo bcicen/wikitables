@@ -19,7 +19,7 @@ def import_tables(article, lang="en"):
 
     def _table_gen():
         for idx, table in enumerate(raw_tables):
-            name = '{}[{}]'.format(page['title'],idx)
+            name = '%s[%s]' % (page['title'],idx)
             yield WikiTable(name, table)
 
     return list(_table_gen())
