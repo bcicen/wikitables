@@ -1,2 +1,2 @@
 __version__ = (0, 2)
-version = '{}.{}'.format(__version__)
+version = '%d.%d' % __version__
