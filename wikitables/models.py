@@ -106,7 +106,8 @@ class WikiTable(object):
     def _read(self, raw_table):
         th_nodes = raw_table.contents.filter_tags(matches=ftag('th'))
         for th in th_nodes:
-            self.head.append(th.contents.strip_code().strip(' '))
+            field_name = th.contents.strip_code().strip(' ')
+            self.head.append(ustr(field_name))
             raw_table.contents.remove(th)
         log.debug('parsed %d columns from table %s' % \
                 (len(th_nodes), self.name))
