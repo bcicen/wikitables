@@ -32,7 +32,7 @@ class Field(object):
         def _read_parts():
             for n in node.contents.nodes:
                 val = self._read_part(n).strip(' \n')
-                if val: yield val
+                if val: yield ustr(val)
         return ' '.join(list(_read_parts()))
     
     def _read_part(self, node):
@@ -46,8 +46,8 @@ class Field(object):
                 return node.contents.strip_code()
             return ''
         if isinstance(node, Wikilink):
-            return ustr(node.title)
-        return ustr(node)
+            return node.title
+        return node
 
     @staticmethod
     def _read_template(node):
