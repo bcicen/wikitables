@@ -7,7 +7,10 @@ def ftag(t):
 def ustr(s):
     if sys.version_info < (3, 0):
         #py2
-        return unicode(s).encode('utf-8')
+        try:
+            return unicode(s).encode('utf-8')
+        except UnicodeDecodeError:
+            return str(s)
     else:
         return str(s)
 
