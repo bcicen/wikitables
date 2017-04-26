@@ -1,8 +1,8 @@
 import sys
 import json
 
-def ftag(t):
-    return lambda node: node.tag == t
+def ftag(*args):
+    return lambda node: node.tag in args
 
 def ustr(s):
     if sys.version_info < (3, 0):
