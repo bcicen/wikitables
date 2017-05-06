@@ -115,15 +115,17 @@ class WikiTable(object):
         for th in header_nodes:
             field_name = th.contents.strip_code().strip(' ')
             self.head.append(ustr(field_name))
-        log.debug('parsed %d columns from table %s' % \
-                (len(self.head), self.name))
    
+        # read rows
         for tr in tr_nodes:
             row = Row(self.head, tr)
             if not row.is_null:
                 self.rows.append(row)
-        log.debug('parsed %d rows from table %s' % \
-                (len(self.rows), self.name))
+
+        self._log('parsed %d rows %d cols' % (len(self.rows), len(self.head)))
+
+    def _log(self, s):
+        log.debug('%s: %s' % (self.name, s))
 
     def _find_header_flat(self, t):
         """
@@ -133,7 +135,7 @@ class WikiTable(object):
         nodes = t.contents.filter_tags(matches=ftag('th'), recursive=False)
         if not nodes:
             return
-        log.debug('found header outside rows (%d <th> elements)' % len(nodes))
+        self._log('found header outside rows (%d <th> elements)' % len(nodes))
         return nodes
 
     def _find_header_row(self, tr_nodes):
@@ -148,6 +150,6 @@ class WikiTable(object):
             if th_count > th_max:
                 th_max = th_count
                 header_idx = idx
-        log.debug('found header at row %d (%d <th> elements)' % \
-                (header_idx, th_max))
+        self._log('found header at row %d (%d <th> elements)' % \
+                    (header_idx, th_max))
         return tr_nodes.pop(header_idx).contents.filter_tags(matches=ftag('th'))
