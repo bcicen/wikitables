@@ -10,7 +10,7 @@ log = logging.getLogger('wikitables')
 
 class Field(object):
     """
-    Field within a table row 
+    Field within a table row
     attributes:
      - raw(mwparserfromhell.nodes.Node) - Unparsed field Wikicode
      - value(str) - Parsed field value as string
@@ -34,7 +34,7 @@ class Field(object):
                 val = self._read_part(n).strip(' \n')
                 if val: yield ustr(val)
         return ' '.join(list(_read_parts()))
-    
+
     def _read_part(self, node):
         if isinstance(node, Template):
             if node.name == 'refn':
@@ -84,10 +84,10 @@ class Row(dict):
         return zip(head, [ Field(c) for c in cols ])
 
 class WikiTable(object):
-    """ 
+    """
     Parsed Wikipedia table
     attributes:
-     - name(str): Table name in the format <article_name>[<table_index>] 
+     - name(str): Table name in the format <article_name>[<table_index>]
      - head(list): List of parsed column names as strings
      - rows(list): List of <wikitables.Row> objects
     """
@@ -126,7 +126,7 @@ class WikiTable(object):
         for th in header_nodes:
             field_name = th.contents.strip_code().strip(' ')
             self._head.append(ustr(field_name))
-   
+
         # read rows
         for tr in self._tr_nodes:
             row = Row(self._head, tr)
@@ -140,7 +140,7 @@ class WikiTable(object):
 
     def _find_header_flat(self):
         """
-        Find header elements in a table, if possible. This case handles 
+        Find header elements in a table, if possible. This case handles
         situations where '<th>' elements are not within a row('<tr>')
         """
         nodes = self._node.contents.filter_tags(
