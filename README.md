@@ -12,6 +12,8 @@ pip install wikitables
 
 ## Usage
 
+### Importing
+
 Importing all tables from a given article:
 ```python
 from wikitables import import_tables
@@ -23,6 +25,8 @@ To import an article from a different language, simply add the Wikipedia languag
 tables = import_tables('İtalya\'daki_şehirler_listesi', 'tr') #returns a list of WikiTable objects
 
 ```
+
+### Accessing
 
 Iterate over a table's rows:
 ```python
@@ -64,7 +68,15 @@ output:
     ...
 ```
 
-Full documentation available [here](http://wikitables.readthedocs.org/en/latest)
+### Table Header
+
+In some cases, you may want to change the column names after import. Simply set a new header with:
+
+```python
+table.head = [ 'newfield1', 'newfield2', 'newfield3' ]
+```
+
+This change will be recursively reflected on all of a given tables rows.
 
 ## Roadmap
 
