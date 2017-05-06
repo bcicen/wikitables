@@ -93,63 +93,78 @@ class WikiTable(object):
     """
     def __init__(self, name, raw_table):
         self.name = ustr(name)
-        self.head = []
         self.rows = []
-        self._raw = raw_table
+        self._head = []
+        self._node = raw_table
+        self._tr_nodes = raw_table.contents.filter_tags(matches=ftag('tr'))
         self._read(raw_table)
 
     def json(self):
         return json.dumps(self.rows, cls=TableJSONEncoder)
 
+    @property
+    def head(self):
+        return self._head
+
+    @head.setter
+    def head(self, val):
+        if not isinstance(val, list):
+            raise ValueError('table head must be provided as list')
+        self._head = val
+        self.rows = [ Row(self._head, tr) for tr in self._tr_nodes ]
+
     def __repr__(self):
         return "<WikiTable '%s'>" % self.name
 
     def _read(self, raw_table):
-        tr_nodes = raw_table.contents.filter_tags(matches=ftag('tr'))
 
         # read header first
-        header_nodes = self._find_header_flat(raw_table)
+        header_nodes = self._find_header_flat()
         if not header_nodes:
-            header_nodes = self._find_header_row(tr_nodes)
+            header_nodes = self._find_header_row()
 
         for th in header_nodes:
             field_name = th.contents.strip_code().strip(' ')
-            self.head.append(ustr(field_name))
+            self._head.append(ustr(field_name))
    
         # read rows
-        for tr in tr_nodes:
-            row = Row(self.head, tr)
+        for tr in self._tr_nodes:
+            row = Row(self._head, tr)
             if not row.is_null:
                 self.rows.append(row)
 
-        self._log('parsed %d rows %d cols' % (len(self.rows), len(self.head)))
+        self._log('parsed %d rows %d cols' % (len(self.rows), len(self._head)))
 
     def _log(self, s):
         log.debug('%s: %s' % (self.name, s))
 
-    def _find_header_flat(self, t):
+    def _find_header_flat(self):
         """
         Find header elements in a table, if possible. This case handles 
         situations where '<th>' elements are not within a row('<tr>')
         """
-        nodes = t.contents.filter_tags(matches=ftag('th'), recursive=False)
+        nodes = self._node.contents.filter_tags(
+                    matches=ftag('th'), recursive=False)
         if not nodes:
             return
         self._log('found header outside rows (%d <th> elements)' % len(nodes))
         return nodes
 
-    def _find_header_row(self, tr_nodes):
+    def _find_header_row(self):
         """
         Evaluate all rows and determine header position, based on
         greatest number of 'th' tagged elements
         """
         th_max = 0
         header_idx = 0
-        for idx, tr in enumerate(tr_nodes):
+        for idx, tr in enumerate(self._tr_nodes):
             th_count = len(tr.contents.filter_tags(matches=ftag('th')))
             if th_count > th_max:
                 th_max = th_count
                 header_idx = idx
+
         self._log('found header at row %d (%d <th> elements)' % \
                     (header_idx, th_max))
-        return tr_nodes.pop(header_idx).contents.filter_tags(matches=ftag('th'))
+
+        header_row = self._tr_nodes.pop(header_idx)
+        return header_row.contents.filter_tags(matches=ftag('th'))
