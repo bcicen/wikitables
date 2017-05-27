@@ -68,9 +68,9 @@ output:
     ...
 ```
 
-### Table Header
+### Table Head
 
-In some cases, you may want to change the column names after import. Simply set a new header with:
+After import, table column names may been modified by setting a new header:
 
 ```python
 table.head = [ 'newfield1', 'newfield2', 'newfield3' ]
