@@ -8,6 +8,8 @@ from wikitables.util import TableJSONEncoder, ftag, ustr
 
 log = logging.getLogger('wikitables')
 
+ignore_attrs = [ 'group="Note"' ]
+
 class Field(object):
     """
     Field within a table row
@@ -42,12 +44,21 @@ class Field(object):
                 return ''
             return self._read_template(node)
         if isinstance(node, Tag):
+            if self._exlude_tag(node):
+                return ''
             if node.contents:
                 return node.contents.strip_code()
             return ''
         if isinstance(node, Wikilink):
             return node.title
         return node
+
+    @staticmethod
+    def _exlude_tag(node):
+        for a [ x.strip() for x in node.attributes() ]:
+            if a in ignore_attrs:
+                return True
+        return False
 
     @staticmethod
     def _read_template(node):
