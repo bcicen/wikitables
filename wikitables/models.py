@@ -4,7 +4,7 @@ from mwparserfromhell.nodes.tag import Tag
 from mwparserfromhell.nodes.template import Template
 from mwparserfromhell.nodes.wikilink import Wikilink
 
-from wikitables.util import TableJSONEncoder, ftag, ustr
+from wikitables.util import TableJSONEncoder, ftag, ustr, guess_type
 
 log = logging.getLogger('wikitables')
 
@@ -22,10 +22,10 @@ class Field(object):
         self.value = self._read(self.raw)
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
     def __repr__(self):
-        return self.value
+        return str(self.value)
 
     def __json__(self):
         return self.value
@@ -35,7 +35,8 @@ class Field(object):
             for n in node.contents.nodes:
                 val = self._read_part(n).strip(' \n')
                 if val: yield ustr(val)
-        return ' '.join(list(_read_parts()))
+        joined = ' '.join(list(_read_parts()))
+        return guess_type(joined)
 
     def _read_part(self, node):
         if isinstance(node, Template):
