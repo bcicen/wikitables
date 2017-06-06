@@ -55,7 +55,8 @@ class Field(object):
 
     @staticmethod
     def _exlude_tag(node):
-        for a [ x.strip() for x in node.attributes() ]:
+        n_attrs = [ x.strip() for x in node.attributes ]
+        for a in n_attrs:
             if a in ignore_attrs:
                 return True
         return False
