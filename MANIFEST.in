@@ -1,0 +1,2 @@
+prune .git*
+prune docs/*
