@@ -46,19 +46,23 @@ class Field(object):
         if isinstance(node, Tag):
             if self._exlude_tag(node):
                 return ''
-            if node.contents:
-                return node.contents.strip_code()
-            return ''
+            return node.contents.strip_code()
         if isinstance(node, Wikilink):
             return node.title
         return node
 
     @staticmethod
     def _exlude_tag(node):
+        # exclude tag nodes with attributes in ignore_attrs
         n_attrs = [ x.strip() for x in node.attributes ]
         for a in n_attrs:
             if a in ignore_attrs:
                 return True
+
+        # exclude tag nodes without contents
+        if not node.contents:
+            return True
+
         return False
 
     @staticmethod
@@ -82,6 +86,9 @@ class Row(dict):
         head = args[0]
         self.raw = args[1]
         super(Row, self).__init__(self._read(head, self.raw))
+
+    def json(self):
+        return json.dumps(self, cls=TableJSONEncoder)
 
     @property
     def is_null(self):
