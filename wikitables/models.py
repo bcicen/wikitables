@@ -48,6 +48,8 @@ class Field(object):
                 return ''
             return node.contents.strip_code()
         if isinstance(node, Wikilink):
+            if node.text:
+                return node.text
             return node.title
         return node
 
