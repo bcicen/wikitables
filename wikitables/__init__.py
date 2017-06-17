@@ -5,9 +5,7 @@ from wikitables.util import ftag
 from wikitables.client import Client
 from wikitables.models import WikiTable
 
-logging.basicConfig(level=logging.WARN)
 log = logging.getLogger('wikitables')
-
 
 def import_tables(article, lang="en"):
     client = Client(lang)

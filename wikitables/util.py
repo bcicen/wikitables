@@ -7,6 +7,11 @@ log = logging.getLogger('wikitables')
 def ftag(*args):
     return lambda node: node.tag in args
 
+def jprint(d):
+    if isinstance(d, str):
+        d = json.loads(d)
+    print(json.dumps(d, indent=2, sort_keys=False))
+
 def guess_type(s):
     """ attempt to convert string value into numeric type """
     sc = s.replace(',', '') # remove comma from potential numbers
