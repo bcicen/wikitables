@@ -10,7 +10,7 @@ def ftag(*args):
 def jprint(d):
     if isinstance(d, str):
         d = json.loads(d)
-    print(json.dumps(d, indent=2, sort_keys=False))
+    print(json.dumps(d, indent=2, sort_keys=False, cls=TableJSONEncoder))
 
 def guess_type(s):
     """ attempt to convert string value into numeric type """
