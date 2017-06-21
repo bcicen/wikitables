@@ -78,6 +78,13 @@ table.head = [ 'newfield1', 'newfield2', 'newfield3' ]
 
 This change will be recursively reflected on all of a given tables rows.
 
+### Commandline
+
+Wikitables also comes with a simple cli tool to fetch and output table json:
+```bash
+wikitables 'List of cities in Italy'
+```
+
 ## Roadmap
 
 Some planned and wishlist features:
