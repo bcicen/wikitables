@@ -31,11 +31,16 @@ class Field(object):
         return self.value
 
     def _read(self, node):
-        def _read_parts():
-            for n in node.contents.nodes:
+        def _read_parts(n):
+            if hasattr(n, 'contents'):
+                for subnode in n.contents.nodes:
+                    for x in _read_parts(subnode):
+                        yield x
+            else:
                 val = self._read_part(n).strip(' \n')
                 if val: yield ustr(val)
-        joined = ' '.join(list(_read_parts()))
+
+        joined = ' '.join(list(_read_parts(node)))
         return guess_type(joined)
 
     def _read_part(self, node):
