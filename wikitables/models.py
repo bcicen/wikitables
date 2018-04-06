@@ -151,9 +151,10 @@ class WikiTable(object):
 
         # read rows
         for tr in self._tr_nodes:
-            row = Row(self._head, tr)
-            if not row.is_null:
-                self.rows.append(row)
+            if tr.contents:
+                row = Row(self._head, tr)
+                if not row.is_null:
+                    self.rows.append(row)
 
         self._log('parsed %d rows %d cols' % (len(self.rows), len(self._head)))
 
