@@ -45,7 +45,7 @@ class Field(object):
                 return ''
             return self._read_template(node)
         if isinstance(node, Tag):
-            if self._exlude_tag(node):
+            if self._exclude_tag(node):
                 return ''
             return node.contents.strip_code()
         if isinstance(node, Wikilink):
@@ -55,7 +55,7 @@ class Field(object):
         return node
 
     @staticmethod
-    def _exlude_tag(node):
+    def _exclude_tag(node):
         # exclude tag nodes with attributes in ignore_attrs
         n_attrs = [ x.strip() for x in node.attributes ]
         for a in n_attrs:
