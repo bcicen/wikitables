@@ -32,7 +32,7 @@ class Field(object):
 
     def _read(self, node):
         def _read_parts(n):
-            if hasattr(n, 'contents'):
+            if hasattr(n, 'contents') and hasattr(n.contents, 'nodes'):
                 for subnode in n.contents.nodes:
                     for x in _read_parts(subnode):
                         yield x
