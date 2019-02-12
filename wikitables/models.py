@@ -37,7 +37,11 @@ class Field(object):
                     for x in _read_parts(subnode):
                         yield x
             else:
-                val = self._read_part(n).strip(' \n')
+                val = self._read_part(n)
+                try:
+                    val = val.strip(' \n')
+                except:
+                    pass
                 if val: yield ustr(val)
 
         joined = ' '.join(list(_read_parts(node)))
@@ -73,9 +77,12 @@ class Field(object):
 
         return False
 
-    @staticmethod
-    def _read_template(node):
-        """ Concatenate all template values having an integer param name """
+    def _read_template(self, node):
+        if node.name == 'change':
+            return self._read_change_template(node)
+
+        # if not known template, attempt to concatenate all values
+        # having an integer param name
         def _is_int(o):
             try:
                 int(ustr(o))
@@ -85,6 +92,23 @@ class Field(object):
 
         vals = [ ustr(p.value) for p in node.params if _is_int(p.name) ]
         return ' '.join(vals)
+
+    def _read_change_template(self, node):
+        params, args = self._read_template_params(node)
+        args = [ int(ustr(a)) for a in args ]
+        if params.get('invert') == 'on':
+            return ((args[0] / args[1]) - 1) * 100
+        return ((args[1] / args[0]) - 1) * 100
+
+    def _read_template_params(self, node):
+        kvs, args = {}, []
+        for p in node.params:
+            if '=' in p:
+                parts = p.split('=')
+                kvs[parts[0]] = '='.join(parts[1:])
+            else:
+                args.append(p)
+        return kvs, args
 
 class Row(dict):
     """
