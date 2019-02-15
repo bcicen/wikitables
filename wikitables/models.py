@@ -1,114 +1,10 @@
 import json
 import logging
-from mwparserfromhell.nodes.tag import Tag
-from mwparserfromhell.nodes.template import Template
-from mwparserfromhell.nodes.wikilink import Wikilink
 
-from wikitables.util import TableJSONEncoder, ftag, ustr, guess_type
+from wikitables.field import read_fields
+from wikitables.util import TableJSONEncoder, ftag, ustr
 
 log = logging.getLogger('wikitables')
-
-ignore_attrs = [ 'group="Note"' ]
-
-class Field(object):
-    """
-    Field within a table row
-    attributes:
-     - raw(mwparserfromhell.nodes.Node) - Unparsed field Wikicode
-     - value(str) - Parsed field value as string
-    """
-    def __init__(self, node):
-        self.raw = node
-        self.value = self._read(self.raw)
-
-    def __str__(self):
-        return str(self.value)
-
-    def __repr__(self):
-        return str(self.value)
-
-    def __json__(self):
-        return self.value
-
-    def _read(self, node):
-        def _read_parts(n):
-            if hasattr(n, 'contents') and hasattr(n.contents, 'nodes'):
-                for subnode in n.contents.nodes:
-                    for x in _read_parts(subnode):
-                        yield x
-            else:
-                val = self._read_part(n)
-                try:
-                    val = val.strip(' \n')
-                except:
-                    pass
-                if val: yield ustr(val)
-
-        joined = ' '.join(list(_read_parts(node)))
-        return guess_type(joined)
-
-    def _read_part(self, node):
-        if isinstance(node, Template):
-            if node.name == 'refn':
-                log.debug('omitting refn subtext from field')
-                return ''
-            return self._read_template(node)
-        if isinstance(node, Tag):
-            if self._exclude_tag(node):
-                return ''
-            return node.contents.strip_code()
-        if isinstance(node, Wikilink):
-            if node.text:
-                return node.text
-            return node.title
-        return node
-
-    @staticmethod
-    def _exclude_tag(node):
-        # exclude tag nodes with attributes in ignore_attrs
-        n_attrs = [ x.strip() for x in node.attributes ]
-        for a in n_attrs:
-            if a in ignore_attrs:
-                return True
-
-        # exclude tag nodes without contents
-        if not node.contents:
-            return True
-
-        return False
-
-    def _read_template(self, node):
-        if node.name == 'change':
-            return self._read_change_template(node)
-
-        # if not known template, attempt to concatenate all values
-        # having an integer param name
-        def _is_int(o):
-            try:
-                int(ustr(o))
-                return True
-            except ValueError:
-                return False
-
-        vals = [ ustr(p.value) for p in node.params if _is_int(p.name) ]
-        return ' '.join(vals)
-
-    def _read_change_template(self, node):
-        params, args = self._read_template_params(node)
-        args = [ int(ustr(a)) for a in args ]
-        if params.get('invert') == 'on':
-            return ((args[0] / args[1]) - 1) * 100
-        return ((args[1] / args[0]) - 1) * 100
-
-    def _read_template_params(self, node):
-        kvs, args = {}, []
-        for p in node.params:
-            if '=' in p:
-                parts = p.split('=')
-                kvs[parts[0]] = '='.join(parts[1:])
-            else:
-                args.append(p)
-        return kvs, args
 
 class Row(dict):
     """
@@ -117,7 +13,7 @@ class Row(dict):
     def __init__(self, *args, **kwargs):
         head = args[0]
         self.raw = args[1]
-        super(Row, self).__init__(self._read(head, self.raw))
+        self._read(head)
 
     def json(self):
         return json.dumps(self, cls=TableJSONEncoder)
@@ -129,10 +25,15 @@ class Row(dict):
                 return False
         return True
 
-    @staticmethod
-    def _read(head, node):
-        cols = node.contents.ifilter_tags(matches=ftag('th', 'td'))
-        return zip(head, [ Field(c) for c in cols ])
+    def _read(self, head):
+        cols = self.raw.contents.ifilter_tags(matches=ftag('th', 'td'))
+        for c in cols:
+            for f in read_fields(c):
+                if len(self) >= len(head):
+                    log.warn('dropping field from unknown column: %s' % f)
+                    continue
+                col_name = head[len(self)]
+                self[col_name] = f
 
 class WikiTable(object):
     """
