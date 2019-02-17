@@ -43,7 +43,8 @@ def read_fields(node):
             vals.append(ustr(x).strip(' \n'))
 
     joined = ' '.join([ x for x in vals if x ])
-    yield Field(node, guess_type(joined))
+    if joined:
+        yield Field(node, guess_type(joined))
 
 def _read_parts(n):
     if hasattr(n, 'contents') and hasattr(n.contents, 'nodes'):
