@@ -40,7 +40,7 @@ def read_fields(node):
         if isinstance(x, Field):
             yield x
         else:
-            vals.append(ustr(x).strip(' \n'))
+            vals.append(ustr(x).strip(' \n\t'))
 
     joined = ' '.join([ x for x in vals if x ])
     if joined:
@@ -124,5 +124,4 @@ def _read_template_params(node):
             kvs[parts[0]] = '='.join(parts[1:])
         else:
             args.append(p)
-    log.debug('parsed template: args=%s params=%s', args, kvs)
     return kvs, args
