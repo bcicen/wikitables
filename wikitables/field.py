@@ -16,9 +16,10 @@ class Field(object):
      - raw(mwparserfromhell.nodes.Node) - Unparsed field Wikicode
      - value(str) - Parsed field value as string
     """
-    def __init__(self, node, value):
+    def __init__(self, node, value, attrs={}):
         self.raw = node
         self.value = value
+        self.attrs = attrs
 
     def __str__(self):
         return str(self.value)
@@ -30,31 +31,42 @@ class Field(object):
         return self.value
 
 ###
-# Field value readers
+# Field value reader
 ###
 
-def read_fields(node):
-    """ Return generator yielding Field objects for a given node """
-    vals = []
-    for x in _read_parts(node):
-        if isinstance(x, Field):
-            yield x
-        else:
-            vals.append(ustr(x).strip(' \n\t'))
+class FieldReader(object):
+    def __init__(self):
+        self._attrs = {} # node attribute state
 
-    joined = ' '.join([ x for x in vals if x ])
-    if joined:
-        yield Field(node, guess_type(joined))
-
-def _read_parts(n):
-    if hasattr(n, 'contents') and hasattr(n.contents, 'nodes'):
-        for subnode in n.contents.nodes:
-            for x in _read_parts(subnode):
+    def parse(self, node):
+        """
+        Return generator yielding Field objects for a given node
+        """
+        self._attrs = {}
+        vals = []
+        for x in self._read_parts(node):
+            if isinstance(x, Field):
+                x.attrs = self._attrs
                 yield x
-        return
+            else:
+                vals.append(ustr(x).strip(' \n\t'))
 
-    for x in _read_part(n):
-        yield x
+        joined = ' '.join([ x for x in vals if x ])
+        if joined:
+            yield Field(node, guess_type(joined), self._attrs)
+
+    def _read_parts(self, n):
+        for a in getattr(n, 'attributes', []):
+            self._attrs[ustr(a.name)] = ustr(a.value)
+
+        if hasattr(n, 'contents') and hasattr(n.contents, 'nodes'):
+            for subnode in n.contents.nodes:
+                for x in self._read_parts(subnode):
+                    yield x
+            return
+
+        for x in _read_part(n):
+            yield x
 
 def _read_part(node):
     if isinstance(node, Template):

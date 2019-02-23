@@ -1,19 +1,65 @@
 import json
 import logging
+from collections import defaultdict
 
-from wikitables.field import read_fields
+from wikitables.field import FieldReader
 from wikitables.util import TableJSONEncoder, ftag, ustr
 
 log = logging.getLogger('wikitables')
+
+class RowReader(object):
+    def __init__(self, head):
+        self.head = head
+        # track spanned fields across rows
+        self._span = {}
+        self._nspan = defaultdict(int)
+        self._freader = FieldReader()
+
+    def parse(self, *nodes):
+        """
+        Parse one or more `tr` nodes, yielding wikitables.Row objects
+        """
+        print(len(nodes))
+        for n in nodes:
+            if not n.contents:
+                continue
+            row = self._parse(n)
+            if not row.is_null:
+                yield row
+
+    def _parse(self, node):
+        r = Row(node)
+        cols = node.contents.ifilter_tags(matches=ftag('th', 'td'))
+        fields = [ f for col in cols for f in self._freader.parse(col) ]
+
+        for col_name in self.head:
+            if self._nspan[col_name]:
+                r[col_name] = self._span[col_name]
+                self._nspan[col_name] -= 1
+                continue
+
+            if not fields:
+                log.warn('missing field for column [%s]' % col_name)
+                continue
+
+            f = fields.pop(0)
+            if 'rowspan' in f.attrs:
+                self._span[col_name] = f
+                self._nspan[col_name] = int(f.attrs['rowspan'])-1
+
+            r[col_name] = f
+
+        for f in fields:
+            log.warn('dropping field from unknown column: %s' % f)
+
+        return r
 
 class Row(dict):
     """
     Single WikiTable row, mapping a field name(str) to wikitables.Field obj
     """
-    def __init__(self, *args, **kwargs):
-        head = args[0]
-        self.raw = args[1]
-        self._read(head)
+    def __init__(self, node):
+        self.raw = node
 
     def json(self):
         return json.dumps(self, cls=TableJSONEncoder)
@@ -24,16 +70,6 @@ class Row(dict):
             if f.value != '':
                 return False
         return True
-
-    def _read(self, head):
-        cols = self.raw.contents.ifilter_tags(matches=ftag('th', 'td'))
-        for c in cols:
-            for f in read_fields(c):
-                if len(self) >= len(head):
-                    log.warn('dropping field from unknown column: %s' % f)
-                    continue
-                col_name = head[len(self)]
-                self[col_name] = f
 
 class WikiTable(object):
     """
@@ -49,7 +85,8 @@ class WikiTable(object):
         self._head = []
         self._node = raw_table
         self._tr_nodes = raw_table.contents.filter_tags(matches=ftag('tr'))
-        self._read(raw_table)
+        self._read_header()
+        self._read_rows()
 
     def json(self):
         return json.dumps(self.rows, cls=TableJSONEncoder)
@@ -63,14 +100,21 @@ class WikiTable(object):
         if not isinstance(val, list):
             raise ValueError('table head must be provided as list')
         self._head = val
-        self.rows = [ Row(self._head, tr) for tr in self._tr_nodes ]
+        self._read_rows()
 
     def __repr__(self):
         return "<WikiTable '%s'>" % self.name
 
-    def _read(self, raw_table):
+    def _log(self, s):
+        log.debug('%s: %s' % (self.name, s))
 
-        # read header first
+    def _read_rows(self):
+        reader = RowReader(self._head)
+        self.rows = list(reader.parse(*self._tr_nodes))
+        self._log('parsed %d rows %d cols' % (len(self.rows), len(self._head)))
+
+    def _read_header(self):
+        # read header
         header_nodes = self._find_header_flat()
         if not header_nodes:
             header_nodes = self._find_header_row()
@@ -78,18 +122,6 @@ class WikiTable(object):
         for th in header_nodes:
             field_name = th.contents.strip_code().strip(' ')
             self._head.append(ustr(field_name))
-
-        # read rows
-        for tr in self._tr_nodes:
-            if tr.contents:
-                row = Row(self._head, tr)
-                if not row.is_null:
-                    self.rows.append(row)
-
-        self._log('parsed %d rows %d cols' % (len(self.rows), len(self._head)))
-
-    def _log(self, s):
-        log.debug('%s: %s' % (self.name, s))
 
     def _find_header_flat(self):
         """
