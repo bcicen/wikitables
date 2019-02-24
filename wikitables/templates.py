@@ -1,38 +1,47 @@
 # Template readers
 import sys
+import logging
 
-from .flag import flag_codes, flag_tmpl_names
+from wikitables.util import ustr
+from wikitables.flag_template import flag_codes
+
+log = logging.getLogger('wikitables')
 
 def read_template(node):
-    strname = ustr(node.name)
-
     if node.name == 'refn':
         log.debug('omitting refn subtext from field')
-        return
-    if node.name == 'change':
-        return _read_change_template(node)
-    if strname in flag_codes:
-        # flag shorthand
-        yield flag_codes[strname]
-        return
-    for x in _read_unknown_template(node):
-        yield x
+        return []
+
+    for fn in readers:
+        a = fn(node)
+        if a:
+            return a
+    return []
 
 def _read_unknown_template(node):
     # for unknown templates, concatenate all arg values
     _, args = _read_template_params(node)
-    return ( ustr(x) for x in args )
+    concat = ' '.join([ ustr(x) for x in args ])
+    return [ concat ]
 
 def _read_change_template(node):
+    if node.name != 'change':
+        return
     params, args = _read_template_params(node)
     args = [ int(ustr(a)) for a in args ]
-    yield Field(node, args[0])
-    yield Field(node, args[1])
+
     if params.get('invert') == 'on':
         change = ((args[0] / args[1]) - 1) * 100
     else:
         change = ((args[1] / args[0]) - 1) * 100
-    yield Field(node, change)
+
+    return [ args[0], args[1], change ]
+
+def _read_flag_template(node):
+    # read flag shorthand templates
+    sname = ustr(node.name)
+    if sname in flag_codes:
+        return [flag_codes[sname]]
 
 def _read_template_params(node):
     kvs, args = {}, []
@@ -44,12 +53,8 @@ def _read_template_params(node):
             args.append(p)
     return kvs, args
 
-def ustr(s):
-    if sys.version_info < (3, 0):
-        #py2
-        try:
-            return unicode(s).encode('utf-8')
-        except UnicodeDecodeError:
-            return str(s)
-    else:
-        return str(s)
+readers = [
+  _read_change_template,
+  _read_flag_template,
+  _read_unknown_template
+]

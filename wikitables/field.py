@@ -72,7 +72,7 @@ class FieldReader(object):
 def _read_part(node):
     if isinstance(node, Template):
         for x in read_template(node):
-            yield x
+            yield Field(node, x)
         return
     if isinstance(node, Tag):
         if not _exclude_tag(node):

@@ -1,20 +1,4 @@
 
-flag_tmpl_names = [
-  "flag",
-  "flagbig",
-  "flagc",
-  "flagcountry",
-  "flagdeco",
-  "flagicon",
-  "flagg",
-  "flaglink",
-  "flag+link",
-  "flaglist",
-  "flagof",
-  "flagright",
-  "flagu"
-]
-
 flag_codes = {
   "ABW": "Aruba",
   "AFG": "Afghanistan",
