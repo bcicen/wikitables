@@ -1,17 +1,26 @@
 # Template readers
 import sys
 
+from .flag import flag_codes, flag_tmpl_names
+
 def read_template(node):
+    strname = ustr(node.name)
+
     if node.name == 'refn':
         log.debug('omitting refn subtext from field')
         return
     if node.name == 'change':
         return _read_change_template(node)
-    return _read_unknown_template(node)
+    if strname in flag_codes:
+        # flag shorthand
+        yield flag_codes[strname]
+        return
+    for x in _read_unknown_template(node):
+        yield x
 
 def _read_unknown_template(node):
     # for unknown templates, concatenate all arg values
-    kvs, args = _read_template_params(node)
+    _, args = _read_template_params(node)
     return ( ustr(x) for x in args )
 
 def _read_change_template(node):
