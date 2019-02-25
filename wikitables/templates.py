@@ -3,6 +3,7 @@ import sys
 import logging
 
 from wikitables.util import ustr
+from wikitables.models import Field
 from wikitables.flag_template import flag_codes
 
 log = logging.getLogger('wikitables')
@@ -12,7 +13,7 @@ def read_template(node):
         log.debug('omitting refn subtext from field')
         return []
 
-    for fn in readers:
+    for fn in _tmpl_readers:
         a = fn(node)
         if a:
             return a
@@ -35,7 +36,7 @@ def _read_change_template(node):
     else:
         change = ((args[1] / args[0]) - 1) * 100
 
-    return [ args[0], args[1], change ]
+    return [ Field(node, args[0]), Field(node, args[1]), Field(node, change) ]
 
 def _read_flag_template(node):
     # read flag shorthand templates
@@ -53,7 +54,7 @@ def _read_template_params(node):
             args.append(p)
     return kvs, args
 
-readers = [
+_tmpl_readers = [
   _read_change_template,
   _read_flag_template,
   _read_unknown_template
