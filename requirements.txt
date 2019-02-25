@@ -1,2 +1,2 @@
-mwparserfromhell==0.4.4
+mwparserfromhell==0.5.2
 requests>=2.20.0
