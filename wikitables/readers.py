@@ -24,8 +24,11 @@ class FieldReader(object):
         """
         self._attrs = {}
         vals = []
+        yielded = False
+
         for x in self._read_parts(node):
             if isinstance(x, Field):
+                yielded = True
                 x.attrs = self._attrs
                 yield x
             else:
@@ -33,7 +36,11 @@ class FieldReader(object):
 
         joined = ' '.join([ x for x in vals if x ])
         if joined:
+            yielded = True
             yield Field(node, guess_type(joined), self._attrs)
+
+        if not yielded:
+            yield Field(node, "", self._attrs)
 
     def _read_parts(self, n):
         for a in getattr(n, 'attributes', []):
@@ -43,10 +50,9 @@ class FieldReader(object):
             for subnode in n.contents.nodes:
                 for x in self._read_parts(subnode):
                     yield x
-            return
-
-        for x in self._read_part(n):
-            yield x
+        else:
+            for x in self._read_part(n):
+                yield x
 
     def _read_part(self, node):
         if isinstance(node, Template):
