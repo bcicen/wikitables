@@ -70,6 +70,8 @@ class WikiTable(object):
         header_nodes = self._find_header_flat()
         if not header_nodes:
             header_nodes = self._find_header_row()
+        if not header_nodes:
+            header_nodes = self._make_default_header()
 
         for th in header_nodes:
             field_name = th.contents.strip_code().strip(' ')
@@ -100,8 +102,25 @@ class WikiTable(object):
                 th_max = th_count
                 header_idx = idx
 
+        if not th_max:
+            return
+
         self._log('found header at row %d (%d <th> elements)' % \
                     (header_idx, th_max))
 
         header_row = self._tr_nodes.pop(header_idx)
         return header_row.contents.filter_tags(matches=ftag('th'))
+
+    def _make_default_header(self):
+        """
+        Return a generic placeholder header based on the tables column count
+        """
+        td_max = 0
+
+        for idx, tr in enumerate(self._tr_nodes):
+            td_count = len(tr.contents.filter_tags(matches=ftag('td')))
+            if td_count > td_max:
+                td_max = td_count
+
+        self._log('creating default header (%d columns)' % td_max)
+        return [ 'column%d' % n for n in range(0,td_max) ]
