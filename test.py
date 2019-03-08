@@ -12,6 +12,14 @@ class TestWikiTables(unittest.TestCase):
         raw_tables = mwp.parse(source).filter_tags(matches=ftag('table'))
         return WikiTable("Test Table", raw_tables[0])
 
+    def _compare(self, table, expected):
+        self.assertEqual(len(table.rows), len(expected))
+        self.assertSetEqual(set(table.head), set(expected[0].keys()))
+
+        rowsdata = json.loads(table.json())
+        for n in range(0, len(expected)):
+            self.assertDictEqual(expected[n], rowsdata[n])
+
     def test_simple_table(self):
         source = """
 {| class="wikitable"
@@ -24,10 +32,19 @@ class TestWikiTables(unittest.TestCase):
 |}
 
 """
-        table = self._load(source)
+        expected = [
+          {
+            "Column 1 header": "Row 1 Column 1",
+            "Column 2 header": "Row 1 Column 2"
+          },
+          {
+            "Column 1 header": "Row 2 Column 1",
+            "Column 2 header": "Row 2 Column 1"
+          }
+        ]
 
-        self.assertEqual(len(table.rows), 2)
-        self.assertEqual(list(table.rows[0].keys()), ['Column 1 header', 'Column 2 header'])
+        table = self._load(source)
+        self._compare(table, expected)
 
     def test_complex_table(self):
         source = """
@@ -50,10 +67,27 @@ class TestWikiTables(unittest.TestCase):
 | {{change|invert=on|6688927|5940224}}
 |}
 """
-        table = self._load(source)
+        expected = [
+          {
+            "2018rank": 1,
+            "City": "São Paulo",
+            "State": "São Paulo",
+            "2018Estimate": 12176866,
+            "2010Census": 10659386,
+            "Change": 14.236092022561152
+          },
+          {
+            "2018rank": 2,
+            "City": "Rio de Janeiro",
+            "State": "Rio de Janeiro",
+            "2018Estimate": 6688927,
+            "2010Census": 5940224,
+            "Change": 12.603952308869172
+          }
+        ]
 
-        self.assertEqual(len(table.rows), 2)
-        self.assertEqual(list(table.rows[0].keys()), ['2018rank', 'City', 'State', '2018Estimate', '2010Census', 'Change'])
+        table = self._load(source)
+        self._compare(table, expected)
 
     def test_flag_template(self):
         source = """
@@ -66,20 +100,31 @@ class TestWikiTables(unittest.TestCase):
 | 1978
 | [[Carl Djerassi]]
 | {{AUT}} / {{USA}}
-|  for his work in bioorganic chemistry, application of new spectroscopic techniques, and his support of international cooperation.
+|  for his work in bioorganic chemistry.
 |-
 | 1980
 | [[Henry Eyring (chemist)|Henry Eyring]]
 | {{MEX}} / {{USA}}
-|  for his development of absolute rate theory and its imaginative applications to chemical and physical processes.
+|  for his development of absolute rate theory.
 |}
 """
-        table = self._load(source)
+        expected = [
+          {
+            "Year": 1978,
+            "Name": "Carl Djerassi",
+            "Nationality": "Austria / United States",
+            "Citation": "for his work in bioorganic chemistry."
+          },
+          {
+            "Year": 1980,
+            "Name": "Henry Eyring",
+            "Nationality": "Mexico / United States",
+            "Citation": "for his development of absolute rate theory."
+          }
+        ]
 
-        self.assertEqual(len(table.rows), 2)
-        self.assertEqual(list(table.rows[0].keys()), ['Year', 'Name', 'Nationality', 'Citation'])
-        self.assertEqual(table.rows[0]['Nationality'].value, 'Austria / United States')
-        self.assertEqual(table.rows[1]['Nationality'].value, 'Mexico / United States')
+        table = self._load(source)
+        self._compare(table, expected)
 
     def test_empty_fields(self):
         source = """
@@ -164,16 +209,10 @@ class TestWikiTables(unittest.TestCase):
             "Type": "Register Memory",
             "Version": ""
           }
-       ]
+        ]
 
         table = self._load(source)
-
-        self.assertEqual(len(table.rows), len(expected))
-        self.assertSetEqual(set(table.head), set(expected[0].keys()))
-
-        rowsdata = json.loads(table.json())
-        for n in range(0, len(expected)):
-            self.assertDictEqual(expected[n], rowsdata[n])
+        self._compare(table, expected)
 
 
 if __name__ == '__main__':
