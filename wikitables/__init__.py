@@ -21,13 +21,13 @@ def import_tables(article, lang='en'):
 
     def _table_gen():
         for idx, table in enumerate(raw_tables):
-            name = '%s[%s]' % (page['title'],idx)
+            name = '%s[%s]' % (page['title'], idx)
             yield WikiTable(name, table, lang)
 
     return list(_table_gen())
 
 
-class WikiTable(object):
+class WikiTable():
     """
     Parsed Wikipedia table
     attributes:
@@ -62,8 +62,8 @@ class WikiTable(object):
     def __repr__(self):
         return "<WikiTable '%s'>" % self.name
 
-    def _log(self, s):
-        log.debug('%s: %s' % (self.name, s))
+    def _log(self, value):
+        log.debug('%s: %s', self.name, value)
 
     def _read_rows(self):
         reader = RowReader(self.name, self._head, self.lang)
@@ -78,8 +78,8 @@ class WikiTable(object):
         if not header_nodes:
             header_nodes = self._make_default_header()
 
-        for th in header_nodes:
-            field_name = th.contents.strip_code().strip(' ')
+        for header_node in header_nodes:
+            field_name = header_node.contents.strip_code().strip(' ')
             self._head.append(ustr(field_name))
 
     def _find_header_flat(self):
@@ -87,10 +87,9 @@ class WikiTable(object):
         Find header elements in a table, if possible. This case handles
         situations where '<th>' elements are not within a row('<tr>')
         """
-        nodes = self._node.contents.filter_tags(
-                    matches=ftag('th'), recursive=False)
+        nodes = self._node.contents.filter_tags(matches=ftag('th'), recursive=False)
         if not nodes:
-            return
+            return None
         self._log('found header outside rows (%d <th> elements)' % len(nodes))
         return nodes
 
@@ -101,14 +100,14 @@ class WikiTable(object):
         """
         th_max = 0
         header_idx = 0
-        for idx, tr in enumerate(self._tr_nodes):
-            th_count = len(tr.contents.filter_tags(matches=ftag('th')))
+        for idx, tr_node in enumerate(self._tr_nodes):
+            th_count = len(tr_node.contents.filter_tags(matches=ftag('th')))
             if th_count > th_max:
                 th_max = th_count
                 header_idx = idx
 
         if not th_max:
-            return
+            return None
 
         self._log('found header at row %d (%d <th> elements)' % \
                     (header_idx, th_max))
@@ -122,10 +121,10 @@ class WikiTable(object):
         """
         td_max = 0
 
-        for idx, tr in enumerate(self._tr_nodes):
-            td_count = len(tr.contents.filter_tags(matches=ftag('td')))
+        for tr_node in self._tr_nodes:
+            td_count = len(tr_node.contents.filter_tags(matches=ftag('td')))
             if td_count > td_max:
                 td_max = td_count
 
         self._log('creating default header (%d columns)' % td_max)
-        return [ 'column%d' % n for n in range(0,td_max) ]
+        return ['column%d' % n for n in range(0, td_max)]

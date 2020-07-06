@@ -10,42 +10,43 @@ def ftag(*args):
     return lambda node: node.tag in args
 
 
-def jprint(d):
-    if isinstance(d, str):
-        d = json.loads(d)
-    print(json.dumps(d, indent=2, sort_keys=False, cls=TableJSONEncoder))
+def jprint(obj):
+    if isinstance(obj, str):
+        obj = json.loads(obj)
+    print(json.dumps(obj, indent=2, sort_keys=False, cls=TableJSONEncoder))
 
 
-def guess_type(s):
+def guess_type(value):
     """ attempt to convert string value into numeric type """
-    sc = s.replace(',', '') # remove comma from potential numbers
+    num_value = value.replace(',', '') # remove comma from potential numbers
 
     try:
-        return int(sc)
+        return int(num_value)
     except ValueError:
         pass
 
     try:
-        return float(sc)
+        return float(num_value)
     except ValueError:
         pass
 
-    return s
+    return value
 
 
-def ustr(s):
+def ustr(value):
     if sys.version_info < (3, 0):
         #py2
         try:
-            return unicode(s).encode('utf-8')
+            # pylint: disable=undefined-variable
+            return unicode(value).encode('utf-8')
         except UnicodeDecodeError:
-            return str(s)
+            return str(value)
     else:
-        return str(s)
+        return str(value)
 
 
 class TableJSONEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if hasattr(obj, '__json__'):
-            return obj.__json__()
-        return json.JSONEncoder.default(self, obj)
+    def default(self, o):
+        if hasattr(o, '__json__'):
+            return o.__json__()
+        return json.JSONEncoder.default(self, o)

@@ -24,5 +24,5 @@ setup(name='wikitables',
           'License :: OSI Approved :: MIT License',
       ),
       keywords='wikipedia data cli commandline',
-      entry_points={ 'console_scripts': ['wikitables = wikitables.cli:main'] }
+      entry_points={'console_scripts': ['wikitables = wikitables.cli:main']}
 )

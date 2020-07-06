@@ -5,6 +5,8 @@ from argparse import ArgumentParser
 
 from wikitables.version import version
 from wikitables.util import TableJSONEncoder
+from wikitables import import_tables
+from wikitables.util import jprint
 
 
 log = logging.getLogger('wikitables')
@@ -12,11 +14,11 @@ log = logging.getLogger('wikitables')
 
 def main():
     parser = ArgumentParser(description='wikitables v%s' % version)
-    parser.add_argument('-l','--lang',
+    parser.add_argument('-l', '--lang',
                         dest='lang',
                         help='article language (default: %(default)s)',
                         default='en')
-    parser.add_argument('-p','--pretty',
+    parser.add_argument('-p', '--pretty',
                         action='store_true',
                         help='pretty-print json output')
     parser.add_argument('-d', '--debug',
@@ -36,12 +38,9 @@ def main():
     else:
         logging.basicConfig(level=logging.WARN)
 
-    from wikitables import import_tables
-    from wikitables.util import jprint
-
     tables = import_tables(args.article, lang=args.lang)
-    d = { t.name:t.rows for t in tables }
+    tables_dict = {table.name: table.rows for table in tables}
     if args.pretty:
-        jprint(d)
+        jprint(tables_dict)
     else:
-        print(json.dumps(d, cls=TableJSONEncoder))
+        print(json.dumps(tables_dict, cls=TableJSONEncoder))

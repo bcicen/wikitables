@@ -17,8 +17,8 @@ class TestWikiTables(unittest.TestCase):
         self.assertSetEqual(set(table.head), set(expected[0].keys()))
 
         rowsdata = json.loads(table.json())
-        for n in range(0, len(expected)):
-            self.assertDictEqual(expected[n], rowsdata[n])
+        for expected_value, row_data in zip(expected, rowsdata):
+            self.assertDictEqual(expected_value, row_data)
 
     def test_simple_table(self):
         source = """
@@ -33,14 +33,14 @@ class TestWikiTables(unittest.TestCase):
 
 """
         expected = [
-          {
-            "Column 1 header": "Row 1 Column 1",
-            "Column 2 header": "Row 1 Column 2"
-          },
-          {
-            "Column 1 header": "Row 2 Column 1",
-            "Column 2 header": "Row 2 Column 1"
-          }
+            {
+                "Column 1 header": "Row 1 Column 1",
+                "Column 2 header": "Row 1 Column 2"
+            },
+            {
+                "Column 1 header": "Row 2 Column 1",
+                "Column 2 header": "Row 2 Column 1"
+            }
         ]
 
         table = self._load(source)
@@ -68,22 +68,22 @@ class TestWikiTables(unittest.TestCase):
 |}
 """
         expected = [
-          {
-            "2018rank": 1,
-            "City": "São Paulo",
-            "State": "São Paulo",
-            "2018Estimate": 12176866,
-            "2010Census": 10659386,
-            "Change": 14.236092022561152
-          },
-          {
-            "2018rank": 2,
-            "City": "Rio de Janeiro",
-            "State": "Rio de Janeiro",
-            "2018Estimate": 6688927,
-            "2010Census": 5940224,
-            "Change": 12.603952308869172
-          }
+            {
+                "2018rank": 1,
+                "City": "São Paulo",
+                "State": "São Paulo",
+                "2018Estimate": 12176866,
+                "2010Census": 10659386,
+                "Change": 14.236092022561152
+            },
+            {
+                "2018rank": 2,
+                "City": "Rio de Janeiro",
+                "State": "Rio de Janeiro",
+                "2018Estimate": 6688927,
+                "2010Census": 5940224,
+                "Change": 12.603952308869172
+            }
         ]
 
         table = self._load(source)
@@ -109,18 +109,18 @@ class TestWikiTables(unittest.TestCase):
 |}
 """
         expected = [
-          {
-            "Year": 1978,
-            "Name": "Carl Djerassi",
-            "Nationality": "Austria / United States",
-            "Citation": "for his work in bioorganic chemistry."
-          },
-          {
-            "Year": 1980,
-            "Name": "Henry Eyring",
-            "Nationality": "Mexico / United States",
-            "Citation": "for his development of absolute rate theory."
-          }
+            {
+                "Year": 1978,
+                "Name": "Carl Djerassi",
+                "Nationality": "Austria / United States",
+                "Citation": "for his work in bioorganic chemistry."
+            },
+            {
+                "Year": 1980,
+                "Name": "Henry Eyring",
+                "Nationality": "Mexico / United States",
+                "Citation": "for his development of absolute rate theory."
+            }
         ]
 
         table = self._load(source)
@@ -146,18 +146,18 @@ class TestWikiTables(unittest.TestCase):
 |}
 """
         expected = [
-          {
-            "Year": 1978,
-            "Name": "Carl Djerassi",
-            "Nationality": "Österreich / Vereinigte Staaten",
-            "Citation": "for his work in bioorganic chemistry."
-          },
-          {
-            "Year": 1980,
-            "Name": "Henry Eyring",
-            "Nationality": "Mexiko / Vereinigte Staaten",
-            "Citation": "for his development of absolute rate theory."
-          }
+            {
+                "Year": 1978,
+                "Name": "Carl Djerassi",
+                "Nationality": "Österreich / Vereinigte Staaten",
+                "Citation": "for his work in bioorganic chemistry."
+            },
+            {
+                "Year": 1980,
+                "Name": "Henry Eyring",
+                "Nationality": "Mexiko / Vereinigte Staaten",
+                "Citation": "for his development of absolute rate theory."
+            }
         ]
 
         table = self._load(source, 'de')
@@ -214,38 +214,38 @@ class TestWikiTables(unittest.TestCase):
 """
 
         expected = [
-          {
-            "Archi-tecture": 6502,
-            "Bits": 8,
-            "Branch evaluation": "Condition register",
-            "Design": "CISC",
-            "Endian-ness": "Little",
-            "Extensions": "",
-            "Instruction encoding": "Variable (8- to 32-bit)",
-            "Intro-duced": 1975,
-            "Max #operands": 1,
-            "Open": "",
-            "Registers(excluding FP/vector)": 3,
-            "Royaltyfree": "",
-            "Type": "Register Memory",
-            "Version": ""
-          },
-          {
-            "Archi-tecture": "68000 / 680x0",
-            "Bits": 32,
-            "Branch evaluation": "Condition register",
-            "Design": "CISC",
-            "Endian-ness": "Big",
-            "Extensions": "",
-            "Instruction encoding": "Variable",
-            "Intro-duced": 1979,
-            "Max #operands": 2,
-            "Open": "",
-            "Registers(excluding FP/vector)": "8 data and 8 address",
-            "Royaltyfree": "",
-            "Type": "Register Memory",
-            "Version": ""
-          }
+            {
+                "Archi-tecture": 6502,
+                "Bits": 8,
+                "Branch evaluation": "Condition register",
+                "Design": "CISC",
+                "Endian-ness": "Little",
+                "Extensions": "",
+                "Instruction encoding": "Variable (8- to 32-bit)",
+                "Intro-duced": 1975,
+                "Max #operands": 1,
+                "Open": "",
+                "Registers(excluding FP/vector)": 3,
+                "Royaltyfree": "",
+                "Type": "Register Memory",
+                "Version": ""
+            },
+            {
+                "Archi-tecture": "68000 / 680x0",
+                "Bits": 32,
+                "Branch evaluation": "Condition register",
+                "Design": "CISC",
+                "Endian-ness": "Big",
+                "Extensions": "",
+                "Instruction encoding": "Variable",
+                "Intro-duced": 1979,
+                "Max #operands": 2,
+                "Open": "",
+                "Registers(excluding FP/vector)": "8 data and 8 address",
+                "Royaltyfree": "",
+                "Type": "Register Memory",
+                "Version": ""
+            }
         ]
 
         table = self._load(source)
