@@ -8,9 +8,9 @@ from wikitables import ftag, WikiTable
 
 class TestWikiTables(unittest.TestCase):
 
-    def _load(self, source):
+    def _load(self, source, lang='en'):
         raw_tables = mwp.parse(source).filter_tags(matches=ftag('table'))
-        return WikiTable("Test Table", raw_tables[0])
+        return WikiTable("Test Table", raw_tables[0], lang)
 
     def _compare(self, table, expected):
         self.assertEqual(len(table.rows), len(expected))
@@ -124,6 +124,43 @@ class TestWikiTables(unittest.TestCase):
         ]
 
         table = self._load(source)
+        self._compare(table, expected)
+
+    def test_flag_template_other_language(self):
+        source = """
+{| class="wikitable"
+! Year
+! Name
+! Nationality
+! Citation
+|-
+| 1978
+| [[Carl Djerassi]]
+| {{AUT}} / {{USA}}
+|  for his work in bioorganic chemistry.
+|-
+| 1980
+| [[Henry Eyring (chemist)|Henry Eyring]]
+| {{MEX}} / {{USA}}
+|  for his development of absolute rate theory.
+|}
+"""
+        expected = [
+          {
+            "Year": 1978,
+            "Name": "Carl Djerassi",
+            "Nationality": "Österreich / Vereinigte Staaten",
+            "Citation": "for his work in bioorganic chemistry."
+          },
+          {
+            "Year": 1980,
+            "Name": "Henry Eyring",
+            "Nationality": "Mexiko / Vereinigte Staaten",
+            "Citation": "for his development of absolute rate theory."
+          }
+        ]
+
+        table = self._load(source, 'de')
         self._compare(table, expected)
 
     def test_empty_fields(self):

@@ -9,7 +9,11 @@ setup(name='wikitables',
       author='Bradley Cicenas',
       author_email='bradley@vektor.nyc',
       url='https://github.com/bcicen/wikitables',
-      install_requires=['mwparserfromhell>=0.4.3', 'requests>=2.9.1'],
+      install_requires=[
+          'mwparserfromhell>=0.4.3',
+          'requests>=2.9.1',
+          'pycountry>=20.7.3'
+      ],
       license='http://opensource.org/licenses/MIT',
       classifiers=(
           'Natural Language :: English',

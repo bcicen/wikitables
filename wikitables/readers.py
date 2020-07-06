@@ -1,5 +1,8 @@
 import logging
 from collections import defaultdict
+import gettext
+
+import pycountry
 from mwparserfromhell.nodes.tag import Tag
 from mwparserfromhell.nodes.template import Template
 from mwparserfromhell.nodes.wikilink import Wikilink
@@ -8,14 +11,24 @@ from wikitables.models import Field, Row
 from wikitables.util import ftag, ustr, guess_type
 from wikitables.templates import read_template
 
+
 log = logging.getLogger('wikitables')
 
 ignore_attrs = [ 'group="Note"' ]
 
+
 class FieldReader(object):
     """ Stateful Field value reader """
 
-    def __init__(self):
+    def __init__(self, lang='en'):
+        self.lang = lang
+        try:
+            language_translation = gettext.translation('iso3166', pycountry.LOCALES_DIR, languages=[lang])
+            language_translation.install()
+        except FileNotFoundError:
+            language_translation = gettext
+        self.translate_fn = language_translation.gettext
+
         self._attrs = {} # node attribute state
 
     def parse(self, node):
@@ -56,7 +69,7 @@ class FieldReader(object):
 
     def _read_part(self, node):
         if isinstance(node, Template):
-            for x in read_template(node):
+            for x in read_template(node, self.translate_fn):
                 yield x
             return
         if isinstance(node, Tag):
@@ -90,14 +103,15 @@ class FieldReader(object):
 class RowReader(object):
     """ Stateful Row reader """
 
-    def __init__(self, tname, head):
+    def __init__(self, tname, head, lang='en'):
         self.head = head
+        self.lang = lang
         self._idx = 0
         self._tname = tname
         # track spanned fields across rows
         self._span = {}
         self._nspan = defaultdict(int)
-        self._freader = FieldReader()
+        self._freader = FieldReader(lang)
 
     def parse(self, *nodes):
         """

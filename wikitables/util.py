@@ -2,15 +2,19 @@ import sys
 import json
 import logging
 
+
 log = logging.getLogger('wikitables')
+
 
 def ftag(*args):
     return lambda node: node.tag in args
+
 
 def jprint(d):
     if isinstance(d, str):
         d = json.loads(d)
     print(json.dumps(d, indent=2, sort_keys=False, cls=TableJSONEncoder))
+
 
 def guess_type(s):
     """ attempt to convert string value into numeric type """
@@ -28,6 +32,7 @@ def guess_type(s):
 
     return s
 
+
 def ustr(s):
     if sys.version_info < (3, 0):
         #py2
@@ -37,6 +42,7 @@ def ustr(s):
             return str(s)
     else:
         return str(s)
+
 
 class TableJSONEncoder(json.JSONEncoder):
     def default(self, obj):

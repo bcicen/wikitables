@@ -1,14 +1,17 @@
 import json
 import logging
+
 import mwparserfromhell as mwp
 
 from wikitables.client import Client
 from wikitables.readers import RowReader
 from wikitables.util import TableJSONEncoder, ftag, ustr
 
+
 log = logging.getLogger('wikitables')
 
-def import_tables(article, lang="en"):
+
+def import_tables(article, lang='en'):
     client = Client(lang)
     page = client.fetch_page(article)
     body = page['revisions'][0]['*']
@@ -19,9 +22,10 @@ def import_tables(article, lang="en"):
     def _table_gen():
         for idx, table in enumerate(raw_tables):
             name = '%s[%s]' % (page['title'],idx)
-            yield WikiTable(name, table)
+            yield WikiTable(name, table, lang)
 
     return list(_table_gen())
+
 
 class WikiTable(object):
     """
@@ -31,8 +35,9 @@ class WikiTable(object):
      - head(list): List of parsed column names as strings
      - rows(list): List of <wikitables.Row> objects
     """
-    def __init__(self, name, raw_table):
+    def __init__(self, name, raw_table, lang='en'):
         self.name = ustr(name)
+        self.lang = lang
         self.rows = []
         self._head = []
         self._node = raw_table
@@ -61,7 +66,7 @@ class WikiTable(object):
         log.debug('%s: %s' % (self.name, s))
 
     def _read_rows(self):
-        reader = RowReader(self.name, self._head)
+        reader = RowReader(self.name, self._head, self.lang)
         self.rows = list(reader.parse(*self._tr_nodes))
         self._log('parsed %d rows %d cols' % (len(self.rows), len(self._head)))
 

@@ -1,10 +1,13 @@
 import logging
 import requests
 
+
 log = logging.getLogger(__name__)
+
 
 class ArticleNotFound(RuntimeError):
     """ Article query returned no results """
+
 
 class Client(requests.Session):
     """ Mediawiki API client """

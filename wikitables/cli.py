@@ -6,7 +6,9 @@ from argparse import ArgumentParser
 from wikitables.version import version
 from wikitables.util import TableJSONEncoder
 
+
 log = logging.getLogger('wikitables')
+
 
 def main():
     parser = ArgumentParser(description='wikitables v%s' % version)

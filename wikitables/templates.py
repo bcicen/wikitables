@@ -2,30 +2,35 @@
 import sys
 import logging
 
+import pycountry
+
 from wikitables.util import ustr
 from wikitables.models import Field
-from wikitables.flag_template import flag_codes
+
 
 log = logging.getLogger('wikitables')
 
-def read_template(node):
+
+def read_template(node, translate_fn):
     if node.name == 'refn':
         log.debug('omitting refn subtext from field')
         return []
 
     for fn in _tmpl_readers:
-        a = fn(node)
+        a = fn(node, translate_fn)
         if a:
             return a
     return []
 
-def _read_unknown_template(node):
+
+def _read_unknown_template(node, translate_fn):
     # for unknown templates, concatenate all arg values
     _, args = _read_template_params(node)
     concat = ' '.join([ ustr(x) for x in args ])
     return [ concat ]
 
-def _read_change_template(node):
+
+def _read_change_template(node, ltranslate_fn):
     if node.name != 'change':
         return
     params, args = _read_template_params(node)
@@ -38,11 +43,16 @@ def _read_change_template(node):
 
     return [ Field(node, args[0]), Field(node, args[1]), Field(node, change) ]
 
-def _read_flag_template(node):
+
+def _read_flag_template(node, translate_fn):
     # read flag shorthand templates
     sname = ustr(node.name)
-    if sname in flag_codes:
-        return [flag_codes[sname]]
+    try:
+        country = pycountry.countries.lookup(sname)
+        return [translate_fn(country.name)]
+    except LookupError:
+        pass
+
 
 def _read_template_params(node):
     kvs, args = {}, []

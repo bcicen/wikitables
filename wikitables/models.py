@@ -2,6 +2,7 @@ import json
 
 from wikitables.util import TableJSONEncoder
 
+
 class Field(object):
     """
     Field within a table row
@@ -22,6 +23,7 @@ class Field(object):
 
     def __json__(self):
         return self.value
+
 
 class Row(dict):
     """
