@@ -2,4 +2,5 @@ language: python
 python:
   - "3.6"
 script:
+  - pylint wikitables/*.py
   - python test.py
