@@ -83,8 +83,13 @@ This change will be recursively reflected on all of a given tables rows.
 ### Commandline
 
 Wikitables also comes with a simple cli tool to fetch and output table json:
+
 ```bash
+# from article name
 wikitables 'List of cities in Italy'
+
+# from URL
+wikitables https://en.wikipedia.org/wiki/Radio_spectrum#ITU
 ```
 
 ### Creating list of DataFrames
