@@ -1,5 +1,10 @@
+# pylint: disable=invalid-name,useless-object-inheritance
+
 import logging
 from collections import defaultdict
+import gettext
+
+import pycountry
 from mwparserfromhell.nodes.tag import Tag
 from mwparserfromhell.nodes.template import Template
 from mwparserfromhell.nodes.wikilink import Wikilink
@@ -8,14 +13,26 @@ from wikitables.models import Field, Row
 from wikitables.util import ftag, ustr, guess_type
 from wikitables.templates import read_template
 
+
 log = logging.getLogger('wikitables')
 
-ignore_attrs = [ 'group="Note"' ]
+ignore_attrs = ['group="Note"']
+
 
 class FieldReader(object):
     """ Stateful Field value reader """
 
-    def __init__(self):
+    def __init__(self, lang='en'):
+        self.lang = lang
+        try:
+            language_translation = gettext.translation(
+                'iso3166', pycountry.LOCALES_DIR, languages=[lang]
+            )
+            language_translation.install()
+        except FileNotFoundError:
+            language_translation = gettext
+        self.translate_fn = language_translation.gettext
+
         self._attrs = {} # node attribute state
 
     def parse(self, node):
@@ -34,7 +51,7 @@ class FieldReader(object):
             else:
                 vals.append(ustr(x).strip(' \n\t'))
 
-        joined = ' '.join([ x for x in vals if x ])
+        joined = ' '.join([x for x in vals if x])
         if joined:
             yielded = True
             yield Field(node, guess_type(joined), self._attrs)
@@ -56,7 +73,7 @@ class FieldReader(object):
 
     def _read_part(self, node):
         if isinstance(node, Template):
-            for x in read_template(node):
+            for x in read_template(node, self.translate_fn):
                 yield x
             return
         if isinstance(node, Tag):
@@ -75,7 +92,7 @@ class FieldReader(object):
     @staticmethod
     def _exclude_tag(node):
         # exclude tag nodes with attributes in ignore_attrs
-        n_attrs = [ x.strip() for x in node.attributes ]
+        n_attrs = [x.strip() for x in node.attributes]
         for a in n_attrs:
             if a in ignore_attrs:
                 return True
@@ -90,14 +107,15 @@ class FieldReader(object):
 class RowReader(object):
     """ Stateful Row reader """
 
-    def __init__(self, tname, head):
+    def __init__(self, tname, head, lang='en'):
         self.head = head
+        self.lang = lang
         self._idx = 0
         self._tname = tname
         # track spanned fields across rows
         self._span = {}
         self._nspan = defaultdict(int)
-        self._freader = FieldReader()
+        self._freader = FieldReader(lang)
 
     def parse(self, *nodes):
         """
@@ -115,7 +133,7 @@ class RowReader(object):
         self._idx += 1
         r = Row(rname, node)
         cols = node.contents.ifilter_tags(matches=ftag('th', 'td'))
-        fields = [ f for col in cols for f in self._freader.parse(col) ]
+        fields = [f for col in cols for f in self._freader.parse(col)]
 
         for col_name in self.head:
             if self._nspan[col_name]:
@@ -124,7 +142,7 @@ class RowReader(object):
                 continue
 
             if not fields:
-                log.warn('%s: missing field for column [%s]' % (r.name, col_name))
+                log.warning('%s: missing field for column [%s]', r.name, col_name)
                 continue
 
             f = fields.pop(0)
@@ -135,6 +153,6 @@ class RowReader(object):
             r[col_name] = f
 
         for f in fields:
-            log.warn('%s: dropping field from unknown column: %s' % (r.name, f))
+            log.warning('%s: dropping field from unknown column: %s', r.name, f)
 
         return r

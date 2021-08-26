@@ -1,10 +1,13 @@
 import logging
 import requests
 
+
 log = logging.getLogger(__name__)
+
 
 class ArticleNotFound(RuntimeError):
     """ Article query returned no results """
+
 
 class Client(requests.Session):
     """ Mediawiki API client """
@@ -15,18 +18,20 @@ class Client(requests.Session):
 
     def fetch_page(self, title, method='GET'):
         """ Query for page by title """
-        params = { 'prop': 'revisions',
-                   'format': 'json',
-                   'action': 'query',
-                   'explaintext': '',
-                   'titles': title,
-                   'rvprop': 'content' }
-        r = self.request(method, self.base_url, params=params)
-        r.raise_for_status()
-        pages = r.json()["query"]["pages"]
+        params = {
+            'prop': 'revisions',
+            'format': 'json',
+            'action': 'query',
+            'explaintext': '',
+            'titles': title,
+            'rvprop': 'content',
+        }
+        req = self.request(method, self.base_url, params=params)
+        req.raise_for_status()
+        pages = req.json()["query"]["pages"]
         # use key from first result in 'pages' array
-        pageid = list(pages.keys())[0]
-        if pageid == '-1':
+        page_id = list(pages.keys())[0]
+        if page_id == '-1':
             raise ArticleNotFound('no matching articles returned')
 
-        return pages[pageid]
+        return pages[page_id]

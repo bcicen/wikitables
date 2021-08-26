@@ -1,6 +1,9 @@
+# pylint: disable=useless-object-inheritance
+
 import json
 
 from wikitables.util import TableJSONEncoder
+
 
 class Field(object):
     """
@@ -9,7 +12,9 @@ class Field(object):
      - raw(mwparserfromhell.nodes.Node) - Unparsed field Wikicode
      - value(str) - Parsed field value as string
     """
-    def __init__(self, node, value, attrs={}):
+    def __init__(self, node, value, attrs=None):
+        if attrs is None:
+            attrs = {}
         self.raw = node
         self.value = value
         self.attrs = attrs
@@ -23,11 +28,13 @@ class Field(object):
     def __json__(self):
         return self.value
 
+
 class Row(dict):
     """
     Single WikiTable row, mapping a field name(str) to wikitables.Field obj
     """
     def __init__(self, name, node):
+        super(Row, self).__init__()
         self.name = name
         self.raw = node
 
@@ -36,7 +43,7 @@ class Row(dict):
 
     @property
     def is_null(self):
-        for k,f in self.items():
-            if f.value != '':
+        for _, item in self.items():
+            if item.value != '':
                 return False
         return True

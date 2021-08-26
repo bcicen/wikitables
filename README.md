@@ -15,15 +15,17 @@ pip install wikitables
 ### Importing
 
 Importing all tables from a given article:
+
 ```python
 from wikitables import import_tables
-tables = import_tables('List of cities in Italy') #returns a list of WikiTable objects
+tables = import_tables('List of cities in Italy')  # returns a list of WikiTable objects
 ```
 
-To import an article from a different language, simply add the Wikipedia language code as an argument to `import_tables`
-```python
-tables = import_tables('İtalya\'daki_şehirler_listesi', 'tr') #returns a list of WikiTable objects
+To import an article from a different language, simply add the Wikipedia language code as an argument to `import_tables`.
+This will also show country names in the given language.
 
+```python
+tables = import_tables('İtalya\'daki_şehirler_listesi', 'tr')  # returns a list of WikiTable objects
 ```
 
 ### Accessing
