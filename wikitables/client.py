@@ -23,7 +23,7 @@ class Client(requests.Session):
             'format': 'json',
             'action': 'query',
             'explaintext': '',
-            'titles': title,
+            'titles': _parse_title(title),
             'rvprop': 'content',
         }
         req = self.request(method, self.base_url, params=params)
@@ -35,3 +35,7 @@ class Client(requests.Session):
             raise ArticleNotFound('no matching articles returned')
 
         return pages[page_id]
+
+def _parse_title(s):
+    # extract title from, potentially, a URL
+    return s.split('/')[-1].split('#')[0].split('?')[0]
