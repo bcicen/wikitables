@@ -12,9 +12,12 @@ class ArticleNotFound(RuntimeError):
 class Client(requests.Session):
     """ Mediawiki API client """
 
-    def __init__(self, lang="en"):
+    def __init__(self, base_url='wikipedia.org/w/api/php', lang="en"):
         super(Client, self).__init__()
-        self.base_url = 'https://' + lang + '.wikipedia.org/w/api.php'
+        if base_url.startswith('wikipedia.org'):
+            self.base_url = f'https://{lang}.{base_url}'
+        else:
+            self.base_url = base_url
 
     def fetch_page(self, title, method='GET'):
         """ Query for page by title """

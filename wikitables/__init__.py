@@ -11,8 +11,8 @@ from wikitables.util import TableJSONEncoder, ftag, ustr
 log = logging.getLogger('wikitables')
 
 
-def import_tables(article, lang='en'):
-    client = Client(lang)
+def import_tables(article, base_url='wikipedia.org/w/api.php', lang='en'):
+    client = Client(base_url, lang)
     page = client.fetch_page(article)
     body = page['revisions'][0]['*']
 
