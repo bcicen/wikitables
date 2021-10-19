@@ -24,6 +24,11 @@ def main():
     parser.add_argument('-d', '--debug',
                         action='store_true',
                         help='enable debug output')
+    parser.add_argument('-u', '--base-url',
+                        action='store',
+                        dest='base_url',
+                        default='wikipedia.org/w/api.php',
+                        help='set the base url')
     parser.add_argument('article', help='article title')
 
     args = parser.parse_args()
@@ -38,7 +43,7 @@ def main():
     else:
         logging.basicConfig(level=logging.WARN)
 
-    tables = import_tables(args.article, lang=args.lang)
+    tables = import_tables(args.article, base_url=args.base_url, lang=args.lang)
     tables_dict = {table.name: table.rows for table in tables}
     if args.pretty:
         jprint(tables_dict)
